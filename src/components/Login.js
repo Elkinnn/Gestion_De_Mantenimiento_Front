@@ -1,46 +1,55 @@
 import React, { useState } from 'react';
-import api from '../api/api';  // Correcta desde components/Login.js
- // Asegúrate de que api.js esté correctamente importado
 import { useNavigate } from 'react-router-dom';
+import api from '../api/api';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate();  // Para redirigir después de login exitoso
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');  // Limpiar errores previos
+    setError('');
 
     try {
-      // Hacer la solicitud POST al backend para obtener el token
-      const response = await api.post('/auth/login', {
-        email,
-        password,
-      });
+      // Enviar credenciales al backend
+      const response = await api.post('/auth/login', { username, password });
+      const { token, role } = response.data;
 
-      // Guardar el token en localStorage
-      localStorage.setItem('token', response.data.token);
+      // Guardar token y rol en localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('role', role);
 
-      // Redirigir al Dashboard
-      navigate('/dashboard');  // Redirige a la página /dashboard
+      // Redirigir según el rol
+      if (role === 'Admin') {
+        navigate('/dashboard');
+      } else if (role === 'Tecnico') {
+        navigate('/activos');
+      }
     } catch (err) {
-      setError('Credenciales inválidas');  // Mostrar error si no es exitoso
+      // Manejar errores
+      if (err.response && err.response.status === 401) {
+        setError('Credenciales inválidas.');
+      } else {
+        setError('Error al intentar iniciar sesión. Por favor, intente nuevamente.');
+      }
     }
   };
 
   return (
-    <div>
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
+    <div style={{ maxWidth: '400px', margin: '0 auto', padding: '20px', textAlign: 'center' }}>
+      <h2>Iniciar sesión</h2>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div>
-          <label>Email</label>
+          <label>Usuario</label>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}  // Actualizar el estado de email
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Usuario"
             required
+            style={{ width: '100%', padding: '8px', margin: '5px 0' }}
           />
         </div>
         <div>
@@ -48,13 +57,17 @@ const Login = () => {
           <input
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}  // Actualizar el estado de contraseña
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Contraseña"
             required
+            style={{ width: '100%', padding: '8px', margin: '5px 0' }}
           />
         </div>
-        <button type="submit">Iniciar sesión</button>
+        <button type="submit" style={{ padding: '10px', cursor: 'pointer' }}>
+          Iniciar sesión
+        </button>
       </form>
-      {error && <p>{error}</p>}  {/* Mostrar mensaje de error si existe */}
+      {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
     </div>
   );
 };
