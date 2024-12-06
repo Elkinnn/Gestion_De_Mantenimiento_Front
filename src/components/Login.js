@@ -13,26 +13,23 @@ const Login = () => {
     setError(''); // Limpiar errores previos
 
     try {
-      // Enviar credenciales al backend
       const response = await api.post('/auth/login', { username, password });
       const { token, role } = response.data;
-
+    
       // Guardar token y rol en localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
-
-      // Redirigir según el rol del usuario
+    
       if (role === 'Admin') {
-        navigate('/dashboard'); // Ruta para administradores
+        navigate('/dashboard');
       } else if (role === 'Tecnico') {
-        navigate('/menu'); // Ruta para técnicos (menú de activos)
+        navigate('/menu');
       } else {
         setError('Rol desconocido. Contacta al administrador.');
       }
     } catch (err) {
-      // Manejar errores según el estado de la respuesta
       if (err.response && err.response.status === 401) {
-        setError('Credenciales inválidas.');
+        setError('Usuario o Contraseña incorrectos');
       } else {
         setError('Error al intentar iniciar sesión. Por favor, intente nuevamente.');
       }
