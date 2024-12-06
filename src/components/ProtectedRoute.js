@@ -1,12 +1,23 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 
-// ProtectedRoute ahora simplemente redirige o permite el componente
-const ProtectedRoute = ({ element: Component, ...rest }) => {
-  const token = localStorage.getItem('token');  // Verificar si hay un token JWT en localStorage
+// Componente para proteger rutas con validación de roles
+const ProtectedRoute = ({ element: Component, allowedRoles }) => {
+  const token = localStorage.getItem('token'); // Verifica si hay un token
+  const role = localStorage.getItem('role'); // Obtiene el rol del usuario
 
-  // Si el token existe, renderiza el componente, sino redirige al login
-  return token ? <Component {...rest} /> : <Navigate to="/login" />;
+  // Si no hay token, redirige a la página de inicio de sesión
+  if (!token) {
+    return <Navigate to="/login" />;
+  }
+
+  // Si el rol del usuario no está permitido, muestra un mensaje de acceso denegado
+  if (allowedRoles && !allowedRoles.includes(role)) {
+    return <h1 style={{ textAlign: 'center', color: 'red' }}>Acceso Denegado</h1>;
+  }
+
+  // Si todo está en orden, renderiza el componente
+  return <Component />;
 };
 
 export default ProtectedRoute;
