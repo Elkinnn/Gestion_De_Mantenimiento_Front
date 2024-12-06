@@ -49,18 +49,26 @@ const Login = () => {
         fontFamily: 'Arial, sans-serif',
         boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
         borderRadius: '8px',
-        backgroundColor: '#f9f9f9',
+        backgroundColor: '#ffffff', // Fondo blanco
       }}
     >
-      <h2 style={{ marginBottom: '20px', color: '#333' }}>Iniciar sesión</h2>
+      <h2 style={{ marginBottom: '20px', color: '#333', fontWeight: 'bold', fontSize: '24px' }}>
+        Iniciar sesión
+      </h2>
       <form
         onSubmit={handleSubmit}
-        style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          padding: '20px',
+          boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.1)',
+          borderRadius: '8px',
+          backgroundColor: '#f4f4f4',
+        }}
       >
         <div>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Usuario
-          </label>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Usuario</label>
           <input
             type="text"
             value={username}
@@ -72,13 +80,13 @@ const Login = () => {
               padding: '10px',
               border: '1px solid #ccc',
               borderRadius: '4px',
+              backgroundColor: '#ffffff', // Fondo blanco para el input
+              fontSize: '16px',
             }}
           />
         </div>
         <div>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Contraseña
-          </label>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Contraseña</label>
           <input
             type="password"
             value={password}
@@ -90,18 +98,21 @@ const Login = () => {
               padding: '10px',
               border: '1px solid #ccc',
               borderRadius: '4px',
+              backgroundColor: '#ffffff', // Fondo blanco para el input
+              fontSize: '16px',
             }}
           />
         </div>
         <button
           type="submit"
           style={{
-            padding: '10px',
+            padding: '12px',
             backgroundColor: '#007bff',
             color: '#fff',
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
+            fontSize: '16px',
           }}
         >
           Iniciar sesión
