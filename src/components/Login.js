@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/api';
+import { FaUser, FaKey } from 'react-icons/fa';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -10,27 +11,23 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Limpiar errores previos
+    setError('');
 
     try {
-      // Enviar credenciales al backend
       const response = await api.post('/auth/login', { username, password });
       const { token, role } = response.data;
 
-      // Guardar token y rol en localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
 
-      // Redirigir según el rol del usuario
       if (role === 'Admin') {
-        navigate('/dashboard'); // Ruta para administradores
+        navigate('/dashboard');
       } else if (role === 'Tecnico') {
-        navigate('/menu'); // Ruta para técnicos (menú de activos)
+        navigate('/menu');
       } else {
         setError('Rol desconocido. Contacta al administrador.');
       }
     } catch (err) {
-      // Manejar errores según el estado de la respuesta
       if (err.response && err.response.status === 401) {
         setError('Credenciales inválidas.');
       } else {
@@ -49,7 +46,7 @@ const Login = () => {
         fontFamily: 'Arial, sans-serif',
         boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
         borderRadius: '8px',
-        backgroundColor: '#ffffff', // Fondo blanco
+        backgroundColor: '#ffffff',
       }}
     >
       <h2 style={{ marginBottom: '20px', color: '#333', fontWeight: 'bold', fontSize: '24px' }}>
@@ -60,15 +57,15 @@ const Login = () => {
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '10px',
+          gap: '15px',
           padding: '20px',
           boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.1)',
           borderRadius: '8px',
           backgroundColor: '#f4f4f4',
         }}
       >
-        <div>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Usuario</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <FaUser style={{ fontSize: '20px', color: ' #000000' }} />
           <input
             type="text"
             value={username}
@@ -76,17 +73,17 @@ const Login = () => {
             placeholder="Usuario"
             required
             style={{
-              width: '100%',
+              flex: 1,
               padding: '10px',
               border: '1px solid #ccc',
               borderRadius: '4px',
-              backgroundColor: '#ffffff', // Fondo blanco para el input
+              backgroundColor: '#ffffff',
               fontSize: '16px',
             }}
           />
         </div>
-        <div>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Contraseña</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <FaKey style={{ fontSize: '20px', color: ' #000000' }} />
           <input
             type="password"
             value={password}
@@ -94,11 +91,11 @@ const Login = () => {
             placeholder="Contraseña"
             required
             style={{
-              width: '100%',
+              flex: 1,
               padding: '10px',
               border: '1px solid #ccc',
               borderRadius: '4px',
-              backgroundColor: '#ffffff', // Fondo blanco para el input
+              backgroundColor: '#ffffff',
               fontSize: '16px',
             }}
           />
