@@ -1,26 +1,25 @@
 import React from 'react';
 import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 
-// Contenedor de la barra lateral
 const SidebarContainer = styled.div`
   width: ${(props) => (props.open ? '200px' : '0')};
   background-color: #003366;
   color: white;
-  height: 100vh;  // Asegura que ocupe todo el alto de la ventana
+  height: 100vh;
   position: fixed;
-  top: 60px;  // Barra lateral comienza justo debajo de la barra superior
+  top: 60px;
   left: 0;
   z-index: 1000;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
   transition: width 0.3s ease;
-  overflow: hidden;  // Evita que el contenido se desborde
-  padding-top: 20px;  // Espacio superior para los elementos de la barra lateral
+  overflow: hidden;
+  padding-top: 20px;
 `;
 
-// Contenedor del botón de hamburguesa
 const HamburgerButton = styled.div`
   position: fixed;
-  top: 20px;  // Posición original de la hamburguesa (arriba)
+  top: 20px;
   left: 20px;
   cursor: pointer;
   font-size: 30px;
@@ -29,7 +28,6 @@ const HamburgerButton = styled.div`
   transition: left 0.3s ease;
 `;
 
-// Elementos del menú
 const MenuItem = styled.div`
   padding: 15px;
   cursor: pointer;
@@ -41,18 +39,38 @@ const MenuItem = styled.div`
   }
 `;
 
-const Sidebar = ({ open, toggleSidebar }) => {
+const Sidebar = ({ open, toggleSidebar, selectedActivo }) => {
+  const navigate = useNavigate();
+
+  const handleEdit = () => {
+    if (!selectedActivo) {
+      alert('Debes seleccionar un activo para editar.');
+      return;
+    }
+    navigate(`/editar/${selectedActivo}`);
+  };
+
+  const handleMaintenance = () => {
+    if (!selectedActivo) {
+      alert('Debes seleccionar un activo para mantenimiento.');
+      return;
+    }
+    navigate(`/mantenimiento/${selectedActivo}`);
+  };
+
+  const handleReport = () => {
+    navigate('/reporte'); // El reporte ya no requiere un activo seleccionado
+  };
+
   return (
     <>
       <SidebarContainer open={open}>
-        <MenuItem>Nuevo</MenuItem>
-        <MenuItem>Editar</MenuItem>
-        <MenuItem>Mantenimiento</MenuItem>
-        <MenuItem>Reportes de Gestión</MenuItem>
+        <MenuItem onClick={handleEdit}>Editar</MenuItem>
+        <MenuItem onClick={handleMaintenance}>Mantenimiento</MenuItem>
+        <MenuItem onClick={handleReport}>Reportes de Gestión</MenuItem> {/* Reporte ya no depende de un activo seleccionado */}
+        <MenuItem onClick={() => navigate('/crear')}>Crear</MenuItem>
       </SidebarContainer>
-      <HamburgerButton onClick={toggleSidebar}>
-        ☰
-      </HamburgerButton>
+      <HamburgerButton onClick={toggleSidebar}>☰</HamburgerButton>
     </>
   );
 };

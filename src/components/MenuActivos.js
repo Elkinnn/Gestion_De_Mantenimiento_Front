@@ -12,13 +12,12 @@ const Container = styled.div`
   background-color: #f8f9fa;
   min-height: 100vh;
   font-family: 'Arial', sans-serif;
-  padding-top: 80px;  /* Deja el espacio para la barra superior */
+  padding-top: 80px;
   position: relative;
   z-index: 1;
   transition: margin-left 0.3s ease;
   overflow-y: auto;
 `;
-
 
 const TableWrapper = styled.div`
   margin-top: 30px;
@@ -36,9 +35,8 @@ const TableTitle = styled.h2`
   font-weight: 600;
   color: #343a40;
   margin-bottom: 20px;
-  margin-left: 20px;  // Esto moverá el título un poco más a la derecha
+  margin-left: 20px;
 `;
-
 
 const Table = styled.table`
   width: 100%;
@@ -57,12 +55,9 @@ const TableHeader = styled.th`
 `;
 
 const TableRow = styled.tr`
-  &:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-
+  background-color: ${(props) => (props.$selected ? '#d6eaf8' : props.$isEven ? '#f9f9f9' : '#fff')};
   &:hover {
-    background-color: #f1f1f1;
+    background-color: ${(props) => (props.$selected ? '#d6eaf8' : '#f1f1f1')};
     cursor: pointer;
   }
 `;
@@ -75,15 +70,14 @@ const TableData = styled.td`
 `;
 
 const Button = styled.button`
-  padding: 6px 12px;
+  padding: 12px 30px;
   background-color: #007bff;
   color: white;
   border: none;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 16px;
   cursor: pointer;
   margin: 10px auto;
-  max-width: 160px;
   width: auto;
   display: block;
 
@@ -95,6 +89,7 @@ const Button = styled.button`
 const MenuActivos = () => {
   const [activos, setActivos] = useState([]);
   const [error, setError] = useState(null);
+  const [selectedActivo, setSelectedActivo] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
@@ -114,10 +109,14 @@ const MenuActivos = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
+  const handleRowClick = (activo) => {
+    setSelectedActivo(selectedActivo === activo.id ? null : activo.id);
+  };
+
   return (
     <>
-      <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} />
-      <Navbar /> {/* Aquí agregamos la barra de navegación */}
+      <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} selectedActivo={selectedActivo} />
+      <Navbar />
       <Container $sidebarOpen={sidebarOpen}>
         <TableTitle>Activos Registrados</TableTitle>
         {error && <p style={{ color: 'red' }}>{error}</p>}
@@ -136,8 +135,13 @@ const MenuActivos = () => {
               </tr>
             </thead>
             <tbody>
-              {activos.map((activo) => (
-                <TableRow key={activo.id}>
+              {activos.map((activo, index) => (
+                <TableRow
+                  key={activo.id}
+                  $isEven={index % 2 === 0}
+                  $selected={selectedActivo === activo.id}
+                  onClick={() => handleRowClick(activo)}
+                >
                   <TableData>{activo.proceso_compra}</TableData>
                   <TableData>{activo.codigo}</TableData>
                   <TableData>{activo.nombre}</TableData>
@@ -151,7 +155,15 @@ const MenuActivos = () => {
           </Table>
         </TableWrapper>
 
-        <Button>Reporte del Activo</Button>
+        <Button onClick={() => {
+          if (!selectedActivo) {
+            alert('Debes seleccionar un activo para generar el reporte.');
+          } else {
+            window.location.href = `/reporte/${selectedActivo}`;  // Navegar al reporte con el activo seleccionado
+          }
+        }}>
+          Reporte del Activo
+        </Button>
       </Container>
     </>
   );
