@@ -14,12 +14,14 @@ const Login = () => {
   
     try {
       const response = await api.post('/auth/login', { username, password });
-      const { token, role } = response.data;
-    
-      // Guardar token y rol en localStorage
+      console.log('Datos de la respuesta:', response.data);  // Verifica lo que el servidor te está enviando
+      const { token, role, userName } = response.data;
+  
+      // Guardar token, rol y nombre en localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
-    
+      localStorage.setItem('userName', userName);  // Guardar el nombre del usuario
+  
       // Redirigir dependiendo del rol
       if (role === 'Admin' || role === 'Tecnico') {
         navigate('/menu'); // Redirige tanto a Admin como a Tecnico al menú

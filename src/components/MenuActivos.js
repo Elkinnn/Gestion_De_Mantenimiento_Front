@@ -17,8 +17,8 @@ const Container = styled.div`
   z-index: 1;
   transition: margin-left 0.3s ease;
   overflow-y: auto;
-  height: 100%;
-  padding-bottom: 0;
+  min-height: 100vh; /* Asegura que el contenedor ocupe toda la altura de la pantalla */
+  padding-bottom: 60px; /* Espacio para el footer */
 `;
 
 const TableWrapper = styled.div`
@@ -98,7 +98,7 @@ const Button = styled.button`
 const MenuActivos = () => {
   const [activos, setActivos] = useState([]);
   const [error, setError] = useState(null);
-  const [selectedActivo, setSelectedActivo] = useState(null);
+  const [selectedActivo, setSelectedActivo] = useState(null); // Solo un activo seleccionado
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [role, setRole] = useState(localStorage.getItem('role'));
 
@@ -106,6 +106,7 @@ const MenuActivos = () => {
     const fetchActivos = async () => {
       try {
         const response = await api.get('/activos/menu');
+        console.log('Datos recibidos:', response.data); // Verifica la estructura de los datos
         setActivos(response.data);
       } catch (err) {
         setError('Error al cargar los activos');
@@ -115,18 +116,25 @@ const MenuActivos = () => {
     fetchActivos();
   }, []);
 
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  const handleRowClick = (activo) => {
-    setSelectedActivo(selectedActivo === activo.id ? null : activo.id);
+  const handleRowClick = (activoId) => {
+    // Si el mismo activo ya está seleccionado, lo deseleccionamos, de lo contrario, lo seleccionamos
+    setSelectedActivo((prevSelected) => {
+      const newSelected = prevSelected === activoId ? null : activoId;
+      console.log(`Activo seleccionado: ${newSelected}`); // Imprime el ID del activo seleccionado
+      return newSelected;
+    });
   };
+
 
   return (
     <>
       <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} selectedActivo={selectedActivo} role={role} />
-      <Navbar title="Menú de Activos"/>
+      <Navbar title="Menú de Activos" />
       <Container $sidebarOpen={sidebarOpen}>
         <TableTitle>Activos Registrados</TableTitle>
         {error && <p style={{ color: 'red' }}>{error}</p>}
@@ -147,11 +155,13 @@ const MenuActivos = () => {
             <tbody>
               {activos.map((activo, index) => (
                 <TableRow
-                  key={activo.id}
+                  key={activo.id}  // La clave debe ser única, usamos el id de cada activo
                   $isEven={index % 2 === 0}
                   $selected={selectedActivo === activo.id}
-                  onClick={() => handleRowClick(activo)}
+                  onClick={() => handleRowClick(activo.id)}  // Solo pasamos el id
                 >
+
+
                   <TableData>{activo.proceso_compra}</TableData>
                   <TableData>{activo.codigo}</TableData>
                   <TableData>{activo.nombre}</TableData>
@@ -161,18 +171,22 @@ const MenuActivos = () => {
                   <TableData>{activo.proveedor}</TableData>
                 </TableRow>
               ))}
+
             </tbody>
           </Table>
         </TableWrapper>
 
         {role !== 'Tecnico' && (
-          <Button onClick={() => {
-            if (!selectedActivo) {
-              alert('Debes seleccionar un activo para generar el reporte.');
-            } else {
-              window.location.href = `/reporte/${selectedActivo}`;  // Navegar al reporte con el activo seleccionado
-            }
-          }}>
+          <Button
+            onClick={() => {
+              if (!selectedActivo) {
+                alert('Debes seleccionar un activo para generar el reporte.');
+              } else {
+                console.log(`Generando reporte para el activo con ID: ${selectedActivo}`);
+                window.location.href = `/reporte/${selectedActivo}`;
+              }
+            }}
+          >
             Reporte del Activo
           </Button>
         )}
