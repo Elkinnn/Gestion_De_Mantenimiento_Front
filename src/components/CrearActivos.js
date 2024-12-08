@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import 'react-toastify/dist/ReactToastify.css';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import BackButton from './BackButton';
 import { showSuccessNotification, showErrorNotification } from './Notification';
+import api from '../api/api';
 
 // Estilo del contenedor principal
 const Container = styled.div`
@@ -89,7 +90,7 @@ const ActionButton = styled.button`
 const CrearActivos = () => {
     const [formData, setFormData] = useState({
         proceso_compra: '',
-        codigo: 'AUTO_GENERADO', // El código está bloqueado por defecto
+        codigo: '',
         nombre: '',
         estado: '',
         ubicacion: '',
@@ -97,12 +98,46 @@ const CrearActivos = () => {
         proveedor: '',
     });
 
+    const [procesosCompra, setProcesosCompra] = useState([]);
+    const [ubicaciones, setUbicaciones] = useState([]);
+    const [tipos, setTipos] = useState([]);
+    const [proveedores, setProveedores] = useState([]);
+    const [estados, setEstados] = useState([]);
+
+    // Cargar datos dinámicos al cargar el componente
+    useEffect(() => {
+        const cargarDatos = async () => {
+            try {
+                const procesosCompra = await api.get('/activos/combo/procesos_compra');
+                const codigo = await api.get('/activos/codigo');
+                const ubicaciones = await api.get('/activos/combo/ubicaciones');
+                const tipos = await api.get('/activos/combo/tipos_activos');
+                const proveedores = await api.get('/activos/combo/proveedores');
+                const estados = await api.get('/activos/combo/estados');
+
+                setProcesosCompra(procesosCompra.data);
+                setFormData((prev) => ({
+                    ...prev,
+                    codigo: codigo.data.codigo,
+                }));
+                setUbicaciones(ubicaciones.data);
+                setTipos(tipos.data);
+                setProveedores(proveedores.data);
+                setEstados(estados.data);
+            } catch (error) {
+                console.error('Error al cargar los datos:', error);
+            }
+        };
+
+        cargarDatos();
+    }, []);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         // Validar que todos los campos estén llenos
@@ -114,19 +149,25 @@ const CrearActivos = () => {
             return;
         }
 
-        // Simular guardar el activo
-        showSuccessNotification('Activo guardado con éxito.');
+        try {
+            // Guardar activo en el backend
+            await api.post('/activos', formData);
+            showSuccessNotification('Activo guardado con éxito.');
 
-        // Reiniciar el formulario
-        setFormData({
-            proceso_compra: '',
-            codigo: 'AUTO_GENERADO',
-            nombre: '',
-            estado: '',
-            ubicacion: '',
-            tipo: '',
-            proveedor: '',
-        });
+            // Reiniciar el formulario
+            setFormData({
+                proceso_compra: '',
+                codigo: formData.codigo,
+                nombre: '',
+                estado: '',
+                ubicacion: '',
+                tipo: '',
+                proveedor: '',
+            });
+        } catch (error) {
+            showErrorNotification('Error al guardar el activo.');
+            console.error(error);
+        }
     };
 
     return (
@@ -144,17 +185,15 @@ const CrearActivos = () => {
                             onChange={handleChange}
                         >
                             <option value="">Selecciona el proceso de compra</option>
-                            {/* Opciones dinámicas vendrán de la base de datos */}
+                            {procesosCompra.map((proceso) => (
+                                <option key={proceso.id} value={proceso.id}>
+                                    {proceso.nombre}
+                                </option>
+                            ))}
                         </Select>
 
                         <Label>Código</Label>
-                        <Input
-                            type="text"
-                            name="codigo"
-                            value={formData.codigo}
-                            onChange={handleChange}
-                            disabled // Código bloqueado para edición
-                        />
+                        <Input type="text" value={formData.codigo} disabled />
 
                         <Label>Nombre</Label>
                         <Input
@@ -166,9 +205,17 @@ const CrearActivos = () => {
                         />
 
                         <Label>Estado</Label>
-                        <Select name="estado" value={formData.estado} onChange={handleChange}>
+                        <Select
+                            name="estado"
+                            value={formData.estado}
+                            onChange={handleChange}
+                        >
                             <option value="">Selecciona el estado</option>
-                            {/* Opciones dinámicas vendrán de la base de datos */}
+                            {estados.map((estado) => (
+                                <option key={estado.id} value={estado.nombre}>
+                                    {estado.nombre}
+                                </option>
+                            ))}
                         </Select>
 
                         <Label>Ubicación</Label>
@@ -178,13 +225,25 @@ const CrearActivos = () => {
                             onChange={handleChange}
                         >
                             <option value="">Selecciona la ubicación</option>
-                            {/* Opciones dinámicas vendrán de la base de datos */}
+                            {ubicaciones.map((ubicacion) => (
+                                <option key={ubicacion.id} value={ubicacion.id}>
+                                    {ubicacion.nombre}
+                                </option>
+                            ))}
                         </Select>
 
                         <Label>Tipo</Label>
-                        <Select name="tipo" value={formData.tipo} onChange={handleChange}>
+                        <Select
+                            name="tipo"
+                            value={formData.tipo}
+                            onChange={handleChange}
+                        >
                             <option value="">Selecciona el tipo</option>
-                            {/* Opciones dinámicas vendrán de la base de datos */}
+                            {tipos.map((tipo) => (
+                                <option key={tipo.id} value={tipo.id}>
+                                    {tipo.nombre}
+                                </option>
+                            ))}
                         </Select>
 
                         <Label>Proveedor</Label>
@@ -194,7 +253,11 @@ const CrearActivos = () => {
                             onChange={handleChange}
                         >
                             <option value="">Selecciona el proveedor</option>
-                            {/* Opciones dinámicas vendrán de la base de datos */}
+                            {proveedores.map((proveedor) => (
+                                <option key={proveedor.id} value={proveedor.id}>
+                                    {proveedor.nombre}
+                                </option>
+                            ))}
                         </Select>
 
                         <ActionButton type="submit">Guardar Activo</ActionButton>
