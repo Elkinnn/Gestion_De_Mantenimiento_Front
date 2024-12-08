@@ -41,6 +41,7 @@ const MenuItem = styled.div`
 
 const Sidebar = ({ open, toggleSidebar, selectedActivo }) => {
   const navigate = useNavigate();
+  const role = localStorage.getItem('role'); // Obtenemos el rol del usuario
 
   const handleEdit = () => {
     if (!selectedActivo) {
@@ -65,10 +66,19 @@ const Sidebar = ({ open, toggleSidebar, selectedActivo }) => {
   return (
     <>
       <SidebarContainer open={open}>
-        <MenuItem onClick={handleEdit}>Editar</MenuItem>
-        <MenuItem onClick={handleMaintenance}>Mantenimiento</MenuItem>
-        <MenuItem onClick={handleReport}>Reportes de Gestión</MenuItem> {/* Reporte ya no depende de un activo seleccionado */}
-        <MenuItem onClick={() => navigate('/crear')}>Crear</MenuItem>
+        {role === 'Admin' && (
+          <>
+            <MenuItem onClick={handleEdit}>Editar</MenuItem>
+            <MenuItem onClick={handleMaintenance}>Mantenimiento</MenuItem>
+            <MenuItem onClick={() => navigate('/crear')}>Crear</MenuItem>
+            <MenuItem onClick={handleReport}>Reportes de Gestión</MenuItem>
+          </>
+        )}
+        {role === 'Tecnico' && (
+          <>
+            <MenuItem onClick={handleMaintenance}>Mantenimiento</MenuItem>
+          </>
+        )}
       </SidebarContainer>
       <HamburgerButton onClick={toggleSidebar}>☰</HamburgerButton>
     </>

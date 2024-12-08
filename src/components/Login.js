@@ -11,7 +11,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(''); // Limpiar errores previos
-
+  
     try {
       const response = await api.post('/auth/login', { username, password });
       const { token, role } = response.data;
@@ -20,10 +20,9 @@ const Login = () => {
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
     
-      if (role === 'Admin') {
-        navigate('/dashboard');
-      } else if (role === 'Tecnico') {
-        navigate('/menu');
+      // Redirigir dependiendo del rol
+      if (role === 'Admin' || role === 'Tecnico') {
+        navigate('/menu'); // Redirige tanto a Admin como a Tecnico al menú
       } else {
         setError('Rol desconocido. Contacta al administrador.');
       }

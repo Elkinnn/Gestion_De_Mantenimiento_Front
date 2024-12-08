@@ -3,6 +3,7 @@ import api from '../api/api';
 import styled from 'styled-components';
 import Sidebar from './Sidebar'; // Importamos Sidebar
 import Navbar from './Navbar';  // Importamos el Navbar
+import Footer from './Footer';  // Importamos el Footer
 
 const Container = styled.div`
   display: flex;
@@ -10,13 +11,14 @@ const Container = styled.div`
   margin-left: ${(props) => (props.$sidebarOpen ? '200px' : '0')};
   padding-right: 20px;
   background-color: #f8f9fa;
-  min-height: 100vh;
   font-family: 'Arial', sans-serif;
   padding-top: 80px;
   position: relative;
   z-index: 1;
   transition: margin-left 0.3s ease;
   overflow-y: auto;
+  height: 100%;
+  padding-bottom: 0;
 `;
 
 const TableWrapper = styled.div`
@@ -26,8 +28,9 @@ const TableWrapper = styled.div`
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
   background-color: #fff;
   padding: 20px;
-  max-height: 400px;  
+  max-height: 400px;
   overflow-y: auto;
+  margin-bottom: 0;
 `;
 
 const TableTitle = styled.h2`
@@ -52,6 +55,7 @@ const TableHeader = styled.th`
   font-weight: bold;
   border: 1px solid #ddd;
   text-transform: uppercase;
+  text-align: center;
 `;
 
 const TableRow = styled.tr`
@@ -70,16 +74,21 @@ const TableData = styled.td`
 `;
 
 const Button = styled.button`
-  padding: 12px 30px;
+  padding: 12px 20px;
   background-color: #007bff;
   color: white;
   border: none;
   border-radius: 4px;
   font-size: 16px;
   cursor: pointer;
-  margin: 10px auto;
+  margin-top: 20px;
+  margin-bottom: 10px;
   width: auto;
+  max-width: 250px;
   display: block;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
 
   &:hover {
     background-color: #0056b3;
@@ -91,6 +100,7 @@ const MenuActivos = () => {
   const [error, setError] = useState(null);
   const [selectedActivo, setSelectedActivo] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [role, setRole] = useState(localStorage.getItem('role'));
 
   useEffect(() => {
     const fetchActivos = async () => {
@@ -115,7 +125,7 @@ const MenuActivos = () => {
 
   return (
     <>
-      <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} selectedActivo={selectedActivo} />
+      <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} selectedActivo={selectedActivo} role={role} />
       <Navbar />
       <Container $sidebarOpen={sidebarOpen}>
         <TableTitle>Activos Registrados</TableTitle>
@@ -155,16 +165,20 @@ const MenuActivos = () => {
           </Table>
         </TableWrapper>
 
-        <Button onClick={() => {
-          if (!selectedActivo) {
-            alert('Debes seleccionar un activo para generar el reporte.');
-          } else {
-            window.location.href = `/reporte/${selectedActivo}`;  // Navegar al reporte con el activo seleccionado
-          }
-        }}>
-          Reporte del Activo
-        </Button>
+        {role !== 'Tecnico' && (
+          <Button onClick={() => {
+            if (!selectedActivo) {
+              alert('Debes seleccionar un activo para generar el reporte.');
+            } else {
+              window.location.href = `/reporte/${selectedActivo}`;  // Navegar al reporte con el activo seleccionado
+            }
+          }}>
+            Reporte del Activo
+          </Button>
+        )}
       </Container>
+
+      <Footer />
     </>
   );
 };
