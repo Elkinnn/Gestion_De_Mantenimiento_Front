@@ -108,6 +108,7 @@ const CrearActivos = () => {
     useEffect(() => {
         const cargarDatos = async () => {
             try {
+                // Obtener datos de backend
                 const procesosCompra = await api.get('/activos/combo/procesos_compra');
                 const codigo = await api.get('/activos/codigo');
                 const ubicaciones = await api.get('/activos/combo/ubicaciones');
@@ -115,10 +116,13 @@ const CrearActivos = () => {
                 const proveedores = await api.get('/activos/combo/proveedores');
                 const estados = await api.get('/activos/combo/estados');
 
-                setProcesosCompra(procesosCompra.data);
+                // Asignar datos a los estados
+                setProcesosCompra(
+                    procesosCompra.data.length > 0 ? procesosCompra.data : [{ id: 1, nombre: 'PRO-001' }]
+                );
                 setFormData((prev) => ({
                     ...prev,
-                    codigo: codigo.data.codigo,
+                    codigo: codigo.data.codigo || 'COD-001',
                 }));
                 setUbicaciones(ubicaciones.data);
                 setTipos(tipos.data);
@@ -186,7 +190,7 @@ const CrearActivos = () => {
                         >
                             <option value="">Selecciona el proceso de compra</option>
                             {procesosCompra.map((proceso) => (
-                                <option key={proceso.id} value={proceso.id}>
+                                <option key={proceso.id} value={proceso.nombre}>
                                     {proceso.nombre}
                                 </option>
                             ))}
@@ -212,7 +216,7 @@ const CrearActivos = () => {
                         >
                             <option value="">Selecciona el estado</option>
                             {estados.map((estado) => (
-                                <option key={estado.id} value={estado.nombre}>
+                                <option key={estado.nombre} value={estado.nombre}>
                                     {estado.nombre}
                                 </option>
                             ))}
