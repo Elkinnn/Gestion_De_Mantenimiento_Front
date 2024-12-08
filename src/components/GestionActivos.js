@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import BackButton from './BackButton'; 
 
 // Estilo del contenedor principal
 const Container = styled.div`
@@ -99,6 +100,7 @@ const GestionActivo = () => {
     return (
         <>
             <Navbar title="Gestión de Activos" />
+            <BackButton />
             <Container>
                 <FormCard>
                     <FormTitle>Nuevo Activo</FormTitle>
