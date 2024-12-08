@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import BackButton from './BackButton';
 import { showSuccessNotification, showErrorNotification } from './Notification';
-
 
 // Estilo del contenedor principal
 const Container = styled.div`
@@ -63,6 +61,15 @@ const Input = styled.input`
   font-size: 16px;
 `;
 
+const Select = styled.select`
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+`;
+
 // Estilo del botón de acción
 const ActionButton = styled.button`
   padding: 10px 20px;
@@ -82,7 +89,7 @@ const ActionButton = styled.button`
 const CrearActivos = () => {
     const [formData, setFormData] = useState({
         proceso_compra: '',
-        codigo: '',
+        codigo: 'AUTO_GENERADO', // El código está bloqueado por defecto
         nombre: '',
         estado: '',
         ubicacion: '',
@@ -99,7 +106,9 @@ const CrearActivos = () => {
         e.preventDefault();
 
         // Validar que todos los campos estén llenos
-        const emptyFields = Object.keys(formData).filter((key) => !formData[key].trim());
+        const emptyFields = Object.keys(formData).filter(
+            (key) => key !== 'codigo' && !formData[key].trim()
+        );
         if (emptyFields.length > 0) {
             showErrorNotification('Por favor, completa todos los campos.');
             return;
@@ -111,7 +120,7 @@ const CrearActivos = () => {
         // Reiniciar el formulario
         setFormData({
             proceso_compra: '',
-            codigo: '',
+            codigo: 'AUTO_GENERADO',
             nombre: '',
             estado: '',
             ubicacion: '',
@@ -129,13 +138,14 @@ const CrearActivos = () => {
                     <FormTitle>Nuevo Activo</FormTitle>
                     <form onSubmit={handleSubmit}>
                         <Label>Proceso de Compra</Label>
-                        <Input
-                            type="text"
+                        <Select
                             name="proceso_compra"
                             value={formData.proceso_compra}
                             onChange={handleChange}
-                            placeholder="Ingrese el proceso de compra"
-                        />
+                        >
+                            <option value="">Selecciona el proceso de compra</option>
+                            {/* Opciones dinámicas vendrán de la base de datos */}
+                        </Select>
 
                         <Label>Código</Label>
                         <Input
@@ -143,7 +153,7 @@ const CrearActivos = () => {
                             name="codigo"
                             value={formData.codigo}
                             onChange={handleChange}
-                            placeholder="Ingrese el código"
+                            disabled // Código bloqueado para edición
                         />
 
                         <Label>Nombre</Label>
@@ -156,40 +166,36 @@ const CrearActivos = () => {
                         />
 
                         <Label>Estado</Label>
-                        <Input
-                            type="text"
-                            name="estado"
-                            value={formData.estado}
-                            onChange={handleChange}
-                            placeholder="Ingrese el estado"
-                        />
+                        <Select name="estado" value={formData.estado} onChange={handleChange}>
+                            <option value="">Selecciona el estado</option>
+                            {/* Opciones dinámicas vendrán de la base de datos */}
+                        </Select>
 
                         <Label>Ubicación</Label>
-                        <Input
-                            type="text"
+                        <Select
                             name="ubicacion"
                             value={formData.ubicacion}
                             onChange={handleChange}
-                            placeholder="Ingrese la ubicación"
-                        />
+                        >
+                            <option value="">Selecciona la ubicación</option>
+                            {/* Opciones dinámicas vendrán de la base de datos */}
+                        </Select>
 
                         <Label>Tipo</Label>
-                        <Input
-                            type="text"
-                            name="tipo"
-                            value={formData.tipo}
-                            onChange={handleChange}
-                            placeholder="Ingrese el tipo"
-                        />
+                        <Select name="tipo" value={formData.tipo} onChange={handleChange}>
+                            <option value="">Selecciona el tipo</option>
+                            {/* Opciones dinámicas vendrán de la base de datos */}
+                        </Select>
 
                         <Label>Proveedor</Label>
-                        <Input
-                            type="text"
+                        <Select
                             name="proveedor"
                             value={formData.proveedor}
                             onChange={handleChange}
-                            placeholder="Ingrese el proveedor"
-                        />
+                        >
+                            <option value="">Selecciona el proveedor</option>
+                            {/* Opciones dinámicas vendrán de la base de datos */}
+                        </Select>
 
                         <ActionButton type="submit">Guardar Activo</ActionButton>
                     </form>
