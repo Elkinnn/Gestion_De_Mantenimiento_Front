@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import Sidebar from './Sidebar'; // Importamos Sidebar
 import Navbar from './Navbar';  // Importamos el Navbar
 import Footer from './Footer';  // Importamos el Footer
+import { showInfoNotification } from './Notification';
 
 const Container = styled.div`
   display: flex;
@@ -38,7 +39,7 @@ const TableTitle = styled.h2`
   font-weight: 600;
   color: #343a40;
   margin-bottom: 20px;
-  margin-left: 20px;
+  text-align: center;  /* Agregar esta línea para centrar el texto */
 `;
 
 const Table = styled.table`
@@ -180,7 +181,7 @@ const MenuActivos = () => {
           <Button
             onClick={() => {
               if (!selectedActivo) {
-                alert('Debes seleccionar un activo para generar el reporte.');
+                showInfoNotification('Debes seleccionar un activo para generar el reporte.');
               } else {
                 console.log(`Generando reporte para el activo con ID: ${selectedActivo}`);
                 window.location.href = `/reporte/${selectedActivo}`;

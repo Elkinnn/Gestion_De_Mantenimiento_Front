@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
+import { showInfoNotification } from './Notification';
 
 const SidebarContainer = styled.div`
   width: ${(props) => (props.open ? '200px' : '0')};
@@ -15,6 +16,9 @@ const SidebarContainer = styled.div`
   transition: width 0.3s ease;
   overflow: hidden;
   padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* El contenido empieza desde arriba */
 `;
 
 const HamburgerButton = styled.div`
@@ -45,7 +49,7 @@ const Sidebar = ({ open, toggleSidebar, selectedActivo }) => {
 
   const handleEdit = () => {
     if (!selectedActivo) {
-      alert('Debes seleccionar un activo para editar.');
+      showInfoNotification('Debes seleccionar un activo para editar.');
       return;
     }
     navigate(`/editar/${selectedActivo}`);
@@ -53,7 +57,7 @@ const Sidebar = ({ open, toggleSidebar, selectedActivo }) => {
 
   const handleMaintenance = () => {
     if (!selectedActivo) {
-      alert('Debes seleccionar un activo para mantenimiento.');
+      showInfoNotification('Debes seleccionar un activo para mantenimiento.');
       return;
     }
     navigate(`/mantenimiento/${selectedActivo}`);
@@ -61,6 +65,15 @@ const Sidebar = ({ open, toggleSidebar, selectedActivo }) => {
 
   const handleReport = () => {
     navigate('/reporte'); // El reporte ya no requiere un activo seleccionado
+  };
+
+  const handleLogout = () => {
+    // Eliminar datos del localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('userName');
+    // Redirigir a la página de inicio de sesión
+    navigate('/login');
   };
 
   return (
@@ -79,6 +92,8 @@ const Sidebar = ({ open, toggleSidebar, selectedActivo }) => {
             <MenuItem onClick={handleMaintenance}>Mantenimiento</MenuItem>
           </>
         )}
+        {/* Aquí agregamos el "Cerrar sesión" como un MenuItem */}
+        <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
       </SidebarContainer>
       <HamburgerButton onClick={toggleSidebar}>☰</HamburgerButton>
     </>
