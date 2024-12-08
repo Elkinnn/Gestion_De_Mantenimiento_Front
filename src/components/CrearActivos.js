@@ -87,15 +87,15 @@ const ActionButton = styled.button`
   }
 `;
 
-const CrearActivos = () => {
+const CrearActivos = ({ initialData = {}, onSuccess }) => {
     const [formData, setFormData] = useState({
-        proceso_compra: '',
-        codigo: '',
-        nombre: '',
-        estado: '',
-        ubicacion_id: '',
-        tipo_activo_id: '',
-        proveedor_id: '',
+        proceso_compra: initialData.proceso_compra || '',
+        codigo: initialData.codigo || '',
+        nombre: initialData.nombre || '',
+        estado: initialData.estado || '',
+        ubicacion_id: initialData.ubicacion_id || '',
+        tipo_activo_id: initialData.tipo_activo_id || '',
+        proveedor_id: initialData.proveedor_id || '',
     });
 
     const [procesosCompra, setProcesosCompra] = useState([]);
@@ -120,7 +120,7 @@ const CrearActivos = () => {
                 setProcesosCompra(procesosCompra.data);
                 setFormData((prev) => ({
                     ...prev,
-                    codigo: codigo.data.codigo || 'COD-001',
+                    codigo: initialData.codigo || codigo.data.codigo || 'COD-001',
                 }));
                 setUbicaciones(ubicaciones.data);
                 setTipos(tipos.data);
@@ -132,7 +132,7 @@ const CrearActivos = () => {
         };
 
         cargarDatos();
-    }, []);
+    }, [initialData]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -144,30 +144,26 @@ const CrearActivos = () => {
 
         // Validar que todos los campos estén llenos
         const emptyFields = Object.keys(formData).filter(
-            (key) => key !== 'codigo' && !formData[key].trim()
+            (key) => key !== 'codigo' && !formData[key]?.trim()
         );
         if (emptyFields.length > 0) {
             showErrorNotification('Por favor, completa todos los campos.');
             return;
         }
-        console.log('Datos enviados:', formData);
 
         try {
-            // Guardar activo en el backend
-            const response = await api.post('/activos', formData);
-            showSuccessNotification('Activo guardado con éxito.');
-            console.log('Respuesta del servidor:', response.data);
+            // Determinar si es creación o edición
+            const url = initialData.id ? `/activos/${initialData.id}` : '/activos';
+            const method = initialData.id ? 'put' : 'post';
 
-            // Reiniciar el formulario
-            setFormData({
-                proceso_compra: '',
-                codigo: formData.codigo,
-                nombre: '',
-                estado: '',
-                ubicacion: '',
-                tipo: '',
-                proveedor: '',
-            });
+            // Enviar datos al backend
+            await api[method](url, formData);
+
+            showSuccessNotification(
+                initialData.id ? 'Activo actualizado con éxito.' : 'Activo creado con éxito.'
+            );
+
+            if (onSuccess) onSuccess(); // Llamar a función de éxito (si existe)
         } catch (error) {
             showErrorNotification('Error al guardar el activo.');
             console.error('Error al guardar el activo:', error.response || error.message);
@@ -176,11 +172,11 @@ const CrearActivos = () => {
 
     return (
         <>
-            <Navbar title="Gestión de Activos" />
+            <Navbar title={initialData.id ? 'Editar Activo' : 'Crear Activo'} />
             <BackButton />
             <Container>
                 <FormCard>
-                    <FormTitle>Nuevo Activo</FormTitle>
+                    <FormTitle>{initialData.id ? 'Editar Activo' : 'Nuevo Activo'}</FormTitle>
                     <form onSubmit={handleSubmit}>
                         <Label>Proceso de Compra</Label>
                         <Select
@@ -198,7 +194,6 @@ const CrearActivos = () => {
 
                         <Label>Código</Label>
                         <Input type="text" value={formData.codigo} disabled />
-
 
                         <Label>Tipo</Label>
                         <Select
@@ -239,7 +234,7 @@ const CrearActivos = () => {
 
                         <Label>Ubicación</Label>
                         <Select
-                            name="ubicacion_id" // Cambiado de 'ubicacion' a 'ubicacion_id'
+                            name="ubicacion_id"
                             value={formData.ubicacion_id}
                             onChange={handleChange}
                         >
@@ -253,7 +248,7 @@ const CrearActivos = () => {
 
                         <Label>Proveedor</Label>
                         <Select
-                            name="proveedor_id" 
+                            name="proveedor_id"
                             value={formData.proveedor_id}
                             onChange={handleChange}
                         >
@@ -265,7 +260,9 @@ const CrearActivos = () => {
                             ))}
                         </Select>
 
-                        <ActionButton type="submit">Guardar Activo</ActionButton>
+                        <ActionButton type="submit">
+                            {initialData.id ? 'Actualizar Activo' : 'Guardar Activo'}
+                        </ActionButton>
                     </form>
                 </FormCard>
             </Container>
