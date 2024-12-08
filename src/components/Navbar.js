@@ -22,10 +22,10 @@ const Title = styled.h1`
   padding-left: 50px;  // Esto moverá el título más a la derecha
 `;
 
-const Navbar = () => {
+const Navbar = ({ title }) => {
   return (
     <NavbarContainer>
-      <Title>Menu de Activos</Title>
+      <Title>{title}</Title>
     </NavbarContainer>
   );
 };

@@ -126,7 +126,7 @@ const MenuActivos = () => {
   return (
     <>
       <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} selectedActivo={selectedActivo} role={role} />
-      <Navbar />
+      <Navbar title="Menú de Activos"/>
       <Container $sidebarOpen={sidebarOpen}>
         <TableTitle>Activos Registrados</TableTitle>
         {error && <p style={{ color: 'red' }}>{error}</p>}

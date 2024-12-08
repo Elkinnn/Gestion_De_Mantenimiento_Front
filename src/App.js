@@ -5,6 +5,7 @@ import Login from './components/Login';
 import MenuActivos from './components/MenuActivos';
 import Mantenimiento from './components/Mantenimiento';
 import ProtectedRoute from './components/ProtectedRoute';
+import GestionActivo from './components/GestionActivos'; 
 
 function App() {
   const token = localStorage.getItem('token'); // Obtener el token de localStorage si está presente
@@ -51,6 +52,15 @@ function App() {
             <ProtectedRoute
               element={Mantenimiento}
               allowedRoles={['Tecnico']}
+            />
+          }
+        />
+        <Route
+          path="/crear"
+          element={
+            <ProtectedRoute
+              element={GestionActivo}
+              allowedRoles={['Admin']}
             />
           }
         />
