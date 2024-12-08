@@ -1,23 +1,29 @@
 import React from 'react';
+import { FaArrowLeft } from 'react-icons/fa'; // Importa el ícono de react-icons
 
 const BackButton = ({ onClick, style }) => {
-  return (
-    <button
-      onClick={onClick || (() => window.history.back())} // Usa onClick si se pasa como prop, de lo contrario usa la funcionalidad predeterminada
-      style={{
-        backgroundColor: 'transparent',
-        border: 'none',
-        cursor: 'pointer',
-        position: 'absolute',
-        right: '50px', // Ajusta la distancia desde el borde derecho
-        top: '0%',
-        transform: 'translateY(30px)', // Alineación vertical
-        ...style, // Permite que se sobreescriban estilos si se pasa como prop
-      }}
-    >
-      🔙 {/* Emoji o ícono de retroceso */}
-    </button>
-  );
+    return (
+        <button
+            onClick={onClick || (() => window.history.back())}
+            style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                position: 'absolute',
+                right: '20px', // Distancia del borde derecho
+                top: '20px', // Distancia del borde superior
+                fontSize: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 10, // Asegúrate de que el botón esté sobre otros elementos
+                transform: 'translateY(65px)',
+                ...style,
+            }}
+        >
+            <FaArrowLeft />
+        </button>
+    );
 };
 
 export default BackButton;
