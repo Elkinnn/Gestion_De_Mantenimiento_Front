@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaArrowLeft } from 'react-icons/fa'; // Importa el ícono de react-icons
+import { FaArrowLeft } from 'react-icons/fa';
 
 const BackButton = ({ onClick, style }) => {
     return (
@@ -10,13 +10,13 @@ const BackButton = ({ onClick, style }) => {
                 border: 'none',
                 cursor: 'pointer',
                 position: 'absolute',
-                right: '20px', // Distancia del borde derecho
-                top: '20px', // Distancia del borde superior
+                right: '20px',
+                top: '20px', 
                 fontSize: '20px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                zIndex: 10, // Asegúrate de que el botón esté sobre otros elementos
+                zIndex: 10, 
                 transform: 'translateY(65px)',
                 ...style,
             }}
