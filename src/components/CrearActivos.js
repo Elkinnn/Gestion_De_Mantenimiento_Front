@@ -108,7 +108,7 @@ const CrearActivos = () => {
     useEffect(() => {
         const cargarDatos = async () => {
             try {
-                // Obtener datos de backend
+                // Obtener datos del backend
                 const procesosCompra = await api.get('/activos/combo/procesos_compra');
                 const codigo = await api.get('/activos/codigo');
                 const ubicaciones = await api.get('/activos/combo/ubicaciones');
@@ -117,9 +117,7 @@ const CrearActivos = () => {
                 const estados = await api.get('/activos/combo/estados');
 
                 // Asignar datos a los estados
-                setProcesosCompra(
-                    procesosCompra.data.length > 0 ? procesosCompra.data : [{ id: 1, nombre: 'PRO-001' }]
-                );
+                setProcesosCompra(procesosCompra.data);
                 setFormData((prev) => ({
                     ...prev,
                     codigo: codigo.data.codigo || 'COD-001',
@@ -190,7 +188,7 @@ const CrearActivos = () => {
                         >
                             <option value="">Selecciona el proceso de compra</option>
                             {procesosCompra.map((proceso) => (
-                                <option key={proceso.id} value={proceso.nombre}>
+                                <option key={proceso.nombre} value={proceso.nombre}>
                                     {proceso.nombre}
                                 </option>
                             ))}
@@ -198,6 +196,21 @@ const CrearActivos = () => {
 
                         <Label>Código</Label>
                         <Input type="text" value={formData.codigo} disabled />
+
+
+                        <Label>Tipo</Label>
+                        <Select
+                            name="tipo"
+                            value={formData.tipo}
+                            onChange={handleChange}
+                        >
+                            <option value="">Selecciona el tipo</option>
+                            {tipos.map((tipo) => (
+                                <option key={tipo.id} value={tipo.id}>
+                                    {tipo.nombre}
+                                </option>
+                            ))}
+                        </Select>
 
                         <Label>Nombre</Label>
                         <Input
@@ -232,20 +245,6 @@ const CrearActivos = () => {
                             {ubicaciones.map((ubicacion) => (
                                 <option key={ubicacion.id} value={ubicacion.id}>
                                     {ubicacion.nombre}
-                                </option>
-                            ))}
-                        </Select>
-
-                        <Label>Tipo</Label>
-                        <Select
-                            name="tipo"
-                            value={formData.tipo}
-                            onChange={handleChange}
-                        >
-                            <option value="">Selecciona el tipo</option>
-                            {tipos.map((tipo) => (
-                                <option key={tipo.id} value={tipo.id}>
-                                    {tipo.nombre}
                                 </option>
                             ))}
                         </Select>
