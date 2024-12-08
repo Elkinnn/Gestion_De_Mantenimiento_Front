@@ -7,6 +7,7 @@ import Mantenimiento from './components/Mantenimiento';
 import ProtectedRoute from './components/ProtectedRoute';
 import GestionActivo from './components/GestionActivos';
 import CrearActivos from './components/CrearActivos';
+import Notification from './components/Notification'; 
 
 function App() {
   const token = localStorage.getItem('token'); // Obtener el token de localStorage si está presente
@@ -20,6 +21,7 @@ function App() {
 
   return (
     <Router>
+      <Notification /> 
       <Routes>
         {/* Ruta inicial, redirige al Login */}
         <Route path="/" element={<Login />} />

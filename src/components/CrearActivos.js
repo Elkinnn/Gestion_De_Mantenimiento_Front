@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import BackButton from './BackButton';
+import { showSuccessNotification, showErrorNotification } from './Notification';
+
 
 // Estilo del contenedor principal
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   margin: 0 auto;
-  padding: 80px 20px 20px; // Espacio para el navbar y el footer
+  padding: 80px 20px 20px;
   max-width: 800px;
-  min-height: calc(100vh - 80px); // Altura total menos el espacio del navbar y footer
+  min-height: calc(100vh - 80px);
   background-color: #f8f9fa;
   align-items: center;
 `;
@@ -27,7 +31,7 @@ const FormCard = styled.div`
   width: 100%;
   @media (max-width: 768px) {
     padding: 20px;
-    max-width: 90%; // Ocupa el 90% del ancho en pantallas pequeñas
+    max-width: 90%;
   }
 `;
 
@@ -68,113 +72,132 @@ const ActionButton = styled.button`
   border-radius: 5px;
   font-size: 16px;
   cursor: pointer;
-  width: 100%; // Botón ocupa el ancho del formulario
-  max-width: 200px; // Máximo ancho del botón
+  width: 100%;
+  max-width: 200px;
   &:hover {
     background-color: #0056b3;
   }
 `;
 
 const CrearActivos = () => {
-  const [formData, setFormData] = useState({
-    proceso_compra: '',
-    codigo: '',
-    nombre: '',
-    estado: '',
-    ubicacion: '',
-    tipo: '',
-    proveedor: '',
-  });
+    const [formData, setFormData] = useState({
+        proceso_compra: '',
+        codigo: '',
+        nombre: '',
+        estado: '',
+        ubicacion: '',
+        tipo: '',
+        proveedor: '',
+    });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+    };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    alert('Activo guardado con éxito: ' + JSON.stringify(formData));
-    // Aquí puedes agregar la lógica para enviar el formulario a la API
-  };
+    const handleSubmit = (e) => {
+        e.preventDefault();
 
-  return (
-    <>
-      <Navbar title="Gestión de Activos" />
-      <BackButton />
-      <Container>
-        <FormCard>
-          <FormTitle>Nuevo Activo</FormTitle>
-          <form onSubmit={handleSubmit}>
-            <Label>Proceso de Compra</Label>
-            <Input
-              type="text"
-              name="proceso_compra"
-              value={formData.proceso_compra}
-              onChange={handleChange}
-              placeholder="Ingrese el proceso de compra"
-            />
+        // Validar que todos los campos estén llenos
+        const emptyFields = Object.keys(formData).filter((key) => !formData[key].trim());
+        if (emptyFields.length > 0) {
+            showErrorNotification('Por favor, completa todos los campos.');
+            return;
+        }
 
-            <Label>Código</Label>
-            <Input
-              type="text"
-              name="codigo"
-              value={formData.codigo}
-              onChange={handleChange}
-              placeholder="Ingrese el código"
-            />
+        // Simular guardar el activo
+        showSuccessNotification('Activo guardado con éxito.');
 
-            <Label>Nombre</Label>
-            <Input
-              type="text"
-              name="nombre"
-              value={formData.nombre}
-              onChange={handleChange}
-              placeholder="Ingrese el nombre del activo"
-            />
+        // Reiniciar el formulario
+        setFormData({
+            proceso_compra: '',
+            codigo: '',
+            nombre: '',
+            estado: '',
+            ubicacion: '',
+            tipo: '',
+            proveedor: '',
+        });
+    };
 
-            <Label>Estado</Label>
-            <Input
-              type="text"
-              name="estado"
-              value={formData.estado}
-              onChange={handleChange}
-              placeholder="Ingrese el estado"
-            />
+    return (
+        <>
+            <Navbar title="Gestión de Activos" />
+            <BackButton />
+            <Container>
+                <FormCard>
+                    <FormTitle>Nuevo Activo</FormTitle>
+                    <form onSubmit={handleSubmit}>
+                        <Label>Proceso de Compra</Label>
+                        <Input
+                            type="text"
+                            name="proceso_compra"
+                            value={formData.proceso_compra}
+                            onChange={handleChange}
+                            placeholder="Ingrese el proceso de compra"
+                        />
 
-            <Label>Ubicación</Label>
-            <Input
-              type="text"
-              name="ubicacion"
-              value={formData.ubicacion}
-              onChange={handleChange}
-              placeholder="Ingrese la ubicación"
-            />
+                        <Label>Código</Label>
+                        <Input
+                            type="text"
+                            name="codigo"
+                            value={formData.codigo}
+                            onChange={handleChange}
+                            placeholder="Ingrese el código"
+                        />
 
-            <Label>Tipo</Label>
-            <Input
-              type="text"
-              name="tipo"
-              value={formData.tipo}
-              onChange={handleChange}
-              placeholder="Ingrese el tipo"
-            />
+                        <Label>Nombre</Label>
+                        <Input
+                            type="text"
+                            name="nombre"
+                            value={formData.nombre}
+                            onChange={handleChange}
+                            placeholder="Ingrese el nombre del activo"
+                        />
 
-            <Label>Proveedor</Label>
-            <Input
-              type="text"
-              name="proveedor"
-              value={formData.proveedor}
-              onChange={handleChange}
-              placeholder="Ingrese el proveedor"
-            />
+                        <Label>Estado</Label>
+                        <Input
+                            type="text"
+                            name="estado"
+                            value={formData.estado}
+                            onChange={handleChange}
+                            placeholder="Ingrese el estado"
+                        />
 
-            <ActionButton type="submit">Guardar Activo</ActionButton>
-          </form>
-        </FormCard>
-      </Container>
-      <Footer />
-    </>
-  );
+                        <Label>Ubicación</Label>
+                        <Input
+                            type="text"
+                            name="ubicacion"
+                            value={formData.ubicacion}
+                            onChange={handleChange}
+                            placeholder="Ingrese la ubicación"
+                        />
+
+                        <Label>Tipo</Label>
+                        <Input
+                            type="text"
+                            name="tipo"
+                            value={formData.tipo}
+                            onChange={handleChange}
+                            placeholder="Ingrese el tipo"
+                        />
+
+                        <Label>Proveedor</Label>
+                        <Input
+                            type="text"
+                            name="proveedor"
+                            value={formData.proveedor}
+                            onChange={handleChange}
+                            placeholder="Ingrese el proveedor"
+                        />
+
+                        <ActionButton type="submit">Guardar Activo</ActionButton>
+                    </form>
+                </FormCard>
+            </Container>
+            <Footer />
+        </>
+    );
 };
 
 export default CrearActivos;
