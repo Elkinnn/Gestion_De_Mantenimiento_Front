@@ -93,9 +93,9 @@ const CrearActivos = () => {
         codigo: '',
         nombre: '',
         estado: '',
-        ubicacion: '',
-        tipo: '',
-        proveedor: '',
+        ubicacion_id: '',
+        tipo_activo_id: '',
+        proveedor_id: '',
     });
 
     const [procesosCompra, setProcesosCompra] = useState([]);
@@ -150,11 +150,13 @@ const CrearActivos = () => {
             showErrorNotification('Por favor, completa todos los campos.');
             return;
         }
+        console.log('Datos enviados:', formData);
 
         try {
             // Guardar activo en el backend
-            await api.post('/activos', formData);
+            const response = await api.post('/activos', formData);
             showSuccessNotification('Activo guardado con éxito.');
+            console.log('Respuesta del servidor:', response.data);
 
             // Reiniciar el formulario
             setFormData({
@@ -168,7 +170,7 @@ const CrearActivos = () => {
             });
         } catch (error) {
             showErrorNotification('Error al guardar el activo.');
-            console.error(error);
+            console.error('Error al guardar el activo:', error.response || error.message);
         }
     };
 
@@ -200,8 +202,8 @@ const CrearActivos = () => {
 
                         <Label>Tipo</Label>
                         <Select
-                            name="tipo"
-                            value={formData.tipo}
+                            name="tipo_activo_id"
+                            value={formData.tipo_activo_id}
                             onChange={handleChange}
                         >
                             <option value="">Selecciona el tipo</option>
@@ -237,8 +239,8 @@ const CrearActivos = () => {
 
                         <Label>Ubicación</Label>
                         <Select
-                            name="ubicacion"
-                            value={formData.ubicacion}
+                            name="ubicacion_id" // Cambiado de 'ubicacion' a 'ubicacion_id'
+                            value={formData.ubicacion_id}
                             onChange={handleChange}
                         >
                             <option value="">Selecciona la ubicación</option>
@@ -251,8 +253,8 @@ const CrearActivos = () => {
 
                         <Label>Proveedor</Label>
                         <Select
-                            name="proveedor"
-                            value={formData.proveedor}
+                            name="proveedor_id" 
+                            value={formData.proveedor_id}
                             onChange={handleChange}
                         >
                             <option value="">Selecciona el proveedor</option>
