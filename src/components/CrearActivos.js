@@ -174,6 +174,17 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true }) => {
                 initialData.id ? 'Activo actualizado con éxito.' : 'Activo creado con éxito.'
             );
 
+            if (!initialData.id) {
+                // Limpiar los campos del formulario solo en modo creación
+                setFormData({
+                    nombre: '',
+                    estado: '',
+                    ubicacion_id: '',
+                    tipo_activo_id: '',
+                    proveedor_id: '',
+                });
+            }
+
             if (onSuccess) onSuccess();
         } catch (error) {
             showErrorNotification('Error al guardar el activo.');
