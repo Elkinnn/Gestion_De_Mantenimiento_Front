@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import BackButton from './BackButton';
-import { showSuccessNotification, showErrorNotification } from './Notification';
+import { showSuccessNotification, showErrorNotification, showInfoNotification } from './Notification';
 import api from '../api/api';
 
 // Estilo del contenedor principal
@@ -87,7 +87,7 @@ const ActionButton = styled.button`
   }
 `;
 
-const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true  }) => {
+const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true }) => {
     const [formData, setFormData] = useState({
         proceso_compra: initialData.proceso_compra || '',
         codigo: initialData.codigo || '',
@@ -103,20 +103,22 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true  }) => {
     const [tipos, setTipos] = useState([]);
     const [proveedores, setProveedores] = useState([]);
     const [estados, setEstados] = useState([]);
+    const [prevTipo, setPrevTipo] = useState(initialData.tipo_activo_id); // Almacena el tipo previo para verificar cambios
 
     // Cargar datos dinámicos al cargar el componente
     useEffect(() => {
+        console.log('Cargando datos iniciales...');
         const cargarDatos = async () => {
             try {
-                // Obtener datos del backend
+                const contexto = initialData.id ? 'editar' : 'crear';
+
                 const procesosCompra = await api.get('/activos/combo/procesos_compra');
                 const codigo = await api.get('/activos/codigo');
                 const ubicaciones = await api.get('/activos/combo/ubicaciones');
                 const tipos = await api.get('/activos/combo/tipos_activos');
                 const proveedores = await api.get('/activos/combo/proveedores');
-                const estados = await api.get('/activos/combo/estados');
+                const estados = await api.get(`/activos/combo/estados/${contexto}`);
 
-                // Asignar datos a los estados
                 setProcesosCompra(procesosCompra.data);
                 setFormData((prev) => ({
                     ...prev,
@@ -132,10 +134,18 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true  }) => {
         };
 
         cargarDatos();
-    }, [initialData]);
+    }, [initialData.id]); // Se ejecuta solo cuando cambia `initialData.id`
+
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+
+        // Mostrar mensaje si el tipo cambia
+        if (name === 'tipo_activo_id' && value !== prevTipo) {
+            showInfoNotification('El tipo ha cambiado. Por favor, asegúrate de actualizar el nombre del activo.');
+            setPrevTipo(value); // Actualiza el tipo previo
+        }
+
         setFormData({ ...formData, [name]: value });
     };
 
@@ -152,18 +162,16 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true  }) => {
         }
 
         try {
-            // Determinar si es creación o edición
             const url = initialData.id ? `/activos/${initialData.id}` : '/activos';
             const method = initialData.id ? 'put' : 'post';
 
-            // Enviar datos al backend
             await api[method](url, formData);
 
             showSuccessNotification(
                 initialData.id ? 'Activo actualizado con éxito.' : 'Activo creado con éxito.'
             );
 
-            if (onSuccess) onSuccess(); // Llamar a función de éxito (si existe)
+            if (onSuccess) onSuccess();
         } catch (error) {
             showErrorNotification('Error al guardar el activo.');
             console.error('Error al guardar el activo:', error.response || error.message);
@@ -183,6 +191,7 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true  }) => {
                             name="proceso_compra"
                             value={formData.proceso_compra}
                             onChange={handleChange}
+                            disabled={!!initialData.id} // Bloquear en edición
                         >
                             <option value="">Selecciona el proceso de compra</option>
                             {procesosCompra.map((proceso) => (
@@ -193,7 +202,7 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true  }) => {
                         </Select>
 
                         <Label>Código</Label>
-                        <Input type="text" value={formData.codigo} disabled />
+                        <Input type="text" value={formData.codigo} disabled /> {/* Siempre bloqueado */}
 
                         <Label>Tipo</Label>
                         <Select
@@ -251,6 +260,7 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true  }) => {
                             name="proveedor_id"
                             value={formData.proveedor_id}
                             onChange={handleChange}
+                            disabled={!!initialData.id} // Bloquear en edición
                         >
                             <option value="">Selecciona el proveedor</option>
                             {proveedores.map((proveedor) => (
