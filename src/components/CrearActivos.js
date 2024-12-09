@@ -87,7 +87,7 @@ const ActionButton = styled.button`
   }
 `;
 
-const CrearActivos = ({ initialData = {}, onSuccess }) => {
+const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true  }) => {
     const [formData, setFormData] = useState({
         proceso_compra: initialData.proceso_compra || '',
         codigo: initialData.codigo || '',
@@ -266,7 +266,7 @@ const CrearActivos = ({ initialData = {}, onSuccess }) => {
                     </form>
                 </FormCard>
             </Container>
-            <Footer />
+            {showFooter && <Footer />}
         </>
     );
 };
