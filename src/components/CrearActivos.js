@@ -139,7 +139,7 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true }) => {
         };
 
         cargarDatos();
-    }, [initialData.id]); // Se ejecuta solo cuando cambia `initialData.id`
+    }, [initialData.id, initialData.codigo, initialData.estado]);
 
 
     const handleChange = (e) => {
@@ -163,7 +163,7 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true }) => {
             : ['proceso_compra', 'nombre', 'estado', 'ubicacion_id', 'tipo_activo_id', 'proveedor_id']; // Campos obligatorios en modo creación
 
         // Validar campos vacíos
-        const emptyFields = requiredFields.filter((key) => !formData[key]?.trim());
+        const emptyFields = requiredFields.filter((key) => !String(formData[key] || '').trim());
         if (emptyFields.length > 0) {
             showErrorNotification('Por favor, completa todos los campos.');
             return;
@@ -196,7 +196,6 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true }) => {
             console.error('Error al guardar el activo:', error.response || error.message);
         }
     };
-
 
     return (
         <>
