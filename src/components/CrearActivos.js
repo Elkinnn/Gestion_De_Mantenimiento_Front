@@ -152,10 +152,13 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Validar que todos los campos estén llenos
-        const emptyFields = Object.keys(formData).filter(
-            (key) => key !== 'codigo' && !formData[key]?.trim()
-        );
+        // Determinar campos a validar según el contexto (crear o editar)
+        const requiredFields = initialData.id
+            ? ['tipo_activo_id', 'nombre', 'estado', 'ubicacion_id'] // Campos editables en modo edición
+            : ['proceso_compra', 'nombre', 'estado', 'ubicacion_id', 'tipo_activo_id', 'proveedor_id']; // Campos obligatorios en modo creación
+
+        // Validar campos vacíos
+        const emptyFields = requiredFields.filter((key) => !formData[key]?.trim());
         if (emptyFields.length > 0) {
             showErrorNotification('Por favor, completa todos los campos.');
             return;
@@ -177,6 +180,7 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true }) => {
             console.error('Error al guardar el activo:', error.response || error.message);
         }
     };
+
 
     return (
         <>
