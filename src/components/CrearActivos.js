@@ -213,12 +213,13 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true }) => {
                             disabled={!!initialData.id} // Bloquear en edición
                         >
                             <option value="">Selecciona el proceso de compra</option>
-                            {procesosCompra.map((proceso) => (
-                                <option key={proceso.nombre} value={proceso.nombre}>
+                            {procesosCompra.map((proceso, index) => (
+                                <option key={`${proceso.nombre}-${index}`} value={proceso.nombre}>
                                     {proceso.nombre}
                                 </option>
                             ))}
                         </Select>
+
 
                         <Label>Código</Label>
                         <Input type="text" value={formData.codigo} disabled /> {/* Siempre bloqueado */}
