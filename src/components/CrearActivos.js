@@ -104,6 +104,7 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true }) => {
     const [proveedores, setProveedores] = useState([]);
     const [estados, setEstados] = useState([]);
     const [prevTipo, setPrevTipo] = useState(initialData.tipo_activo_id); // Almacena el tipo previo para verificar cambios
+    const [disableEstado, setDisableEstado] = useState(false);
 
     // Cargar datos dinámicos al cargar el componente
     useEffect(() => {
@@ -128,6 +129,10 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true }) => {
                 setTipos(tipos.data);
                 setProveedores(proveedores.data);
                 setEstados(estados.data);
+
+                if (initialData.estado === 'No Funcionando') {
+                    setDisableEstado(true);
+                }
             } catch (error) {
                 console.error('Error al cargar los datos:', error);
             }
@@ -247,6 +252,7 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true }) => {
                             name="estado"
                             value={formData.estado}
                             onChange={handleChange}
+                            disabled={disableEstado}
                         >
                             <option value="">Selecciona el estado</option>
                             {estados.map((estado) => (
