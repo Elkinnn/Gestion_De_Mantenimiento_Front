@@ -81,7 +81,7 @@ const Sidebar = ({ open, toggleSidebar, selectedActivo }) => {
       <SidebarContainer open={open}>
         {role === 'Admin' && (
           <>
-            <MenuItem onClick={() => navigate('/crear')}>Crear</MenuItem>
+            <MenuItem onClick={() => navigate('/crear')}>Nuevo</MenuItem>
             <MenuItem onClick={handleEdit}>Editar</MenuItem>
             <MenuItem onClick={handleMaintenance}>Mantenimiento</MenuItem>
             <MenuItem onClick={handleReport}>Reportes de Gestión</MenuItem>
