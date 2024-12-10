@@ -154,25 +154,30 @@ const MenuActivos = () => {
               </tr>
             </thead>
             <tbody>
-              {activos.map((activo, index) => (
-                <TableRow
-                  key={activo.id}  // La clave debe ser única, usamos el id de cada activo
-                  $isEven={index % 2 === 0}
-                  $selected={selectedActivo === activo.id}
-                  onClick={() => handleRowClick(activo.id)}  // Solo pasamos el id
-                >
-
-
-                  <TableData>{activo.proceso_compra}</TableData>
-                  <TableData>{activo.codigo}</TableData>
-                  <TableData>{activo.nombre}</TableData>
-                  <TableData>{activo.estado}</TableData>
-                  <TableData>{activo.ubicacion}</TableData>
-                  <TableData>{activo.tipo}</TableData>
-                  <TableData>{activo.proveedor}</TableData>
-                </TableRow>
-              ))}
-
+              {Array.isArray(activos) && activos.length > 0 ? (
+                activos.map((activo, index) => (
+                  <TableRow
+                    key={activo.id} // La clave debe ser única, usamos el id de cada activo
+                    $isEven={index % 2 === 0}
+                    $selected={selectedActivo === activo.id}
+                    onClick={() => handleRowClick(activo.id)} // Solo pasamos el id
+                  >
+                    <TableData>{activo.proceso_compra}</TableData>
+                    <TableData>{activo.codigo}</TableData>
+                    <TableData>{activo.nombre}</TableData>
+                    <TableData>{activo.estado}</TableData>
+                    <TableData>{activo.ubicacion}</TableData>
+                    <TableData>{activo.tipo}</TableData>
+                    <TableData>{activo.proveedor}</TableData>
+                  </TableRow>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: '#555' }}>
+                    No hay activos registrados.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </Table>
         </TableWrapper>
