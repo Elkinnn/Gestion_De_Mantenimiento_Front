@@ -101,7 +101,7 @@ const MenuActivos = () => {
   const [error, setError] = useState(null);
   const [selectedActivo, setSelectedActivo] = useState(null); // Solo un activo seleccionado
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [role, setRole] = useState(localStorage.getItem('role'));
+  const [role] = useState(localStorage.getItem('role'));
 
   useEffect(() => {
     const fetchActivos = async () => {
