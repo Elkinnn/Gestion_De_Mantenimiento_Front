@@ -147,7 +147,7 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true }) => {
             console.error('Error al cargar los datos:', error);
         }
     }, [stableInitialData]);
-    
+
     useEffect(() => {
         cargarDatos();
     }, [cargarDatos]);
@@ -157,7 +157,7 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true }) => {
 
         if (name === 'tipo_activo_id' && value !== prevTipo) {
             showInfoNotification('El tipo ha cambiado. Por favor, asegúrate de actualizar el nombre del activo.');
-            setPrevTipo(value); 
+            setPrevTipo(value);
         }
 
         setFormData({ ...formData, [name]: value || '' });
@@ -198,7 +198,7 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true }) => {
                     proveedor_id: '',
                 });
 
-                await cargarDatos(); 
+                await cargarDatos();
             }
 
             if (onSuccess) onSuccess();
