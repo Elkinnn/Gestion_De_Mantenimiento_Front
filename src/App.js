@@ -16,27 +16,26 @@ function App() {
   // Si el token existe, decodificamos para obtener el rol y redirigir según corresponda
   let userRole = null;
   if (token) {
-    const decoded = jwtDecode(token); // Decodificamos el token
-    userRole = decoded.role; // Extraemos el rol del usuario
+    try {
+      const decoded = jwtDecode(token); // Decodificamos el token
+      userRole = decoded.role; // Extraemos el rol del usuario
+    } catch (err) {
+      console.error('Error al decodificar el token:', err);
+    }
   }
 
   return (
     <Router>
       <Notification />
       <Routes>
-        {/* Ruta inicial, redirige al Login */}
-        <Route path="/" element={<Login />} />
+        {/* Ruta inicial, redirige al componente de Mantenimiento o Login */}
+        <Route
+          path="/"
+          element={userRole ? <Navigate to="/mantenimientos" replace /> : <Login />}
+        />
 
         {/* Ruta para Login */}
         <Route path="/login" element={<Login />} />
-
-        {/* Redirigir automáticamente a /menu si el token es válido (Admin o Tecnico) */}
-        {userRole && (
-          <Route
-            path="/"
-            element={<Navigate to="/menu" replace />}
-          />
-        )}
 
         {/* Ruta protegida para el menú de activos (técnicos y administradores) */}
         <Route
@@ -49,16 +48,18 @@ function App() {
           }
         />
 
+        {/* Ruta protegida para el componente de Mantenimientos */}
         <Route
           path="/mantenimientos"
           element={
             <ProtectedRoute
               element={Mantenimiento}
-              allowedRoles={['Admin', 'Tecnico']} // Permitir acceso a Admin y Técnico
+              allowedRoles={['Admin', 'Tecnico']}
             />
           }
         />
 
+        {/* Ruta protegida para gestionar activos */}
         <Route
           path="/crear"
           element={

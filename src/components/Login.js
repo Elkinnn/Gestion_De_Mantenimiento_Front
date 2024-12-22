@@ -25,7 +25,7 @@ const Login = () => {
 
       // Redirigir dependiendo del rol
       if (role === 'Admin' || role === 'Tecnico') {
-        navigate('/menu'); // Redirige tanto a Admin como a Tecnico al menú
+        navigate('/mantenimientos'); // Redirige tanto a Admin como a Tecnico al menú
       } else {
         setError('Rol desconocido. Contacta al administrador.');
       }

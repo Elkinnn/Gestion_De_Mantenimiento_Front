@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/api';
 import styled from 'styled-components';
-import Sidebar from './Sidebar'; // Importamos Sidebar
-import Navbar from './Navbar';  // Importamos el Navbar
-import Footer from './Footer';  // Importamos el Footer
+import Sidebar from './Sidebar';
+import Navbar from './Navbar';
+import Footer from './Footer';
 import { showInfoNotification } from './Notification';
 
 const Container = styled.div`
@@ -18,8 +18,8 @@ const Container = styled.div`
   z-index: 1;
   transition: margin-left 0.3s ease;
   overflow-y: auto;
-  min-height: 100vh; /* Asegura que el contenedor ocupe toda la altura de la pantalla */
-  padding-bottom: 60px; /* Espacio para el footer */
+  min-height: 100vh;
+  padding-bottom: 60px;
 `;
 
 const TableWrapper = styled.div`
@@ -39,7 +39,7 @@ const TableTitle = styled.h2`
   font-weight: 600;
   color: #343a40;
   margin-bottom: 20px;
-  text-align: center;  /* Agregar esta línea para centrar el texto */
+  text-align: center;
 `;
 
 const Table = styled.table`
@@ -99,15 +99,15 @@ const Button = styled.button`
 const MenuActivos = () => {
   const [activos, setActivos] = useState([]);
   const [error, setError] = useState(null);
-  const [selectedActivo, setSelectedActivo] = useState(null); // Solo un activo seleccionado
+  const [selectedActivo, setSelectedActivo] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [role] = useState(localStorage.getItem('role'));
+  const [role] = useState(localStorage.getItem('role')); // Obtiene el rol del usuario
 
   useEffect(() => {
     const fetchActivos = async () => {
       try {
         const response = await api.get('/activos/menu');
-        console.log('Datos recibidos:', response.data); // Verifica la estructura de los datos
+        console.log('Datos recibidos:', response.data);
         setActivos(response.data);
       } catch (err) {
         setError('Error al cargar los activos');
@@ -117,29 +117,26 @@ const MenuActivos = () => {
     fetchActivos();
   }, []);
 
-
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
   const handleRowClick = (activoId) => {
-    // Si el mismo activo ya está seleccionado, lo deseleccionamos, de lo contrario, lo seleccionamos
     setSelectedActivo((prevSelected) => {
       const newSelected = prevSelected === activoId ? null : activoId;
-      console.log(`Activo seleccionado: ${newSelected}`); // Imprime el ID del activo seleccionado
+      console.log(`Activo seleccionado: ${newSelected}`);
       return newSelected;
     });
   };
 
-
   return (
     <>
-     <Sidebar
-  open={sidebarOpen}
-  toggleSidebar={toggleSidebar}
-  selectedActivo={selectedActivo}
-  currentMenu="activos" // Indica el menú actual
-/>
+      <Sidebar
+        open={sidebarOpen}
+        toggleSidebar={toggleSidebar}
+        selectedActivo={selectedActivo}
+        currentMenu="activos"
+      />
       <Navbar title="Menú de Activos" />
       <Container $sidebarOpen={sidebarOpen}>
         <TableTitle>Activos Registrados</TableTitle>
@@ -162,10 +159,10 @@ const MenuActivos = () => {
               {Array.isArray(activos) && activos.length > 0 ? (
                 activos.map((activo, index) => (
                   <TableRow
-                    key={activo.id} // La clave debe ser única, usamos el id de cada activo
+                    key={activo.id}
                     $isEven={index % 2 === 0}
                     $selected={selectedActivo === activo.id}
-                    onClick={() => handleRowClick(activo.id)} // Solo pasamos el id
+                    onClick={() => handleRowClick(activo.id)}
                   >
                     <TableData>{activo.proceso_compra}</TableData>
                     <TableData>{activo.codigo}</TableData>
@@ -187,7 +184,8 @@ const MenuActivos = () => {
           </Table>
         </TableWrapper>
 
-        {role !== 'Tecnico' && (
+        {/* Ocultar botón de reporte para técnicos */}
+        {role === 'Admin' && (
           <Button
             onClick={() => {
               if (!selectedActivo) {

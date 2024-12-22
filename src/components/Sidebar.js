@@ -69,7 +69,13 @@ const Sidebar = ({ open, toggleSidebar, selectedActivo, currentMenu }) => {
   return (
     <>
       <SidebarContainer open={open}>
-        {currentMenu === 'mantenimientos' ? (
+        {role === 'Tecnico' ? (
+          <>
+            <MenuItem onClick={() => navigate('/crear-mantenimiento')}>Nuevo Mantenimiento</MenuItem>
+            <MenuItem onClick={() => navigate('/menu')}>Activos</MenuItem>
+            <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
+          </>
+        ) : currentMenu === 'mantenimientos' ? (
           <>
             <MenuItem onClick={() => navigate('/crear-mantenimiento')}>Nuevo Mantenimiento</MenuItem>
             <MenuItem onClick={() => navigate('/menu')}>Activos</MenuItem>
@@ -78,9 +84,9 @@ const Sidebar = ({ open, toggleSidebar, selectedActivo, currentMenu }) => {
           </>
         ) : currentMenu === 'activos' ? (
           <>
-            <MenuItem onClick={() => navigate('/crear')}>Nuevo</MenuItem>
-            <MenuItem onClick={handleEdit}>Editar</MenuItem>
-            <MenuItem onClick={handleMaintenance}>Mantenimiento</MenuItem>
+            <MenuItem onClick={() => navigate('/crear')}>Nuevo Activo</MenuItem>
+            <MenuItem onClick={handleEdit}>Editar Activo</MenuItem>
+            <MenuItem onClick={handleMaintenance}>Mantenimientos</MenuItem>
             <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
           </>
         ) : (
