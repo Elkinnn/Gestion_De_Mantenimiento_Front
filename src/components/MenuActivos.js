@@ -6,6 +6,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import { showInfoNotification } from './Notification';
 import FiltroComponent from './FiltroComponent';
+import LimpiarComponent from './LimpiarComponent';
 
 const Container = styled.div`
   display: flex;
@@ -21,6 +22,22 @@ const Container = styled.div`
   overflow-y: auto;
   min-height: 100vh;
   padding-bottom: 60px;
+`;
+
+const FilterContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-start;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+`;
+
+const FilterLabel = styled.span`
+  font-size: 16px;
+  font-weight: bold;
+  margin-right: 10px;
+  white-space: nowrap;
 `;
 
 const TableWrapper = styled.div`
@@ -154,6 +171,15 @@ const MenuActivos = () => {
     }));
   };
 
+  const handleClear = () => {
+    setFiltros({
+      proceso_compra: '',
+      proveedor: '',
+      tipo: '',
+      estado: '',
+    });
+  };
+
   return (
     <>
       <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} selectedActivo={selectedActivo} role={role} />
@@ -162,7 +188,11 @@ const MenuActivos = () => {
         <TableTitle>Activos Registrados</TableTitle>
         {error && <p style={{ color: 'red' }}>{error}</p>}
 
-        <FiltroComponent filtros={filtros} handleFilterChange={handleFilterChange} />
+        <FilterContainer>
+          <FilterLabel>Filtrar por:</FilterLabel>
+          <FiltroComponent filtros={filtros} handleFilterChange={handleFilterChange} />
+          <LimpiarComponent handleClear={handleClear} />
+        </FilterContainer>
 
         <TableWrapper>
           <Table>
@@ -170,7 +200,7 @@ const MenuActivos = () => {
               <tr>
                 <TableHeader>Proceso de Compra</TableHeader>
                 <TableHeader>Código</TableHeader>
-                <TableHeader>Nombre</TableHeader>
+                <TableHeader>Serie</TableHeader>
                 <TableHeader>Estado</TableHeader>
                 <TableHeader>Ubicación</TableHeader>
                 <TableHeader>Tipo</TableHeader>
