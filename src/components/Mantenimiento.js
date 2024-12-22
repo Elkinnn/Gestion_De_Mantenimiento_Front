@@ -35,6 +35,13 @@ const FilterSelect = styled.select`
   background-color: #fff;
 `;
 
+const FilterInput = styled.input`
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+`;
+
 const TableWrapper = styled.div`
   margin-top: 30px;
   border-radius: 10px;
@@ -109,6 +116,8 @@ const Mantenimientos = () => {
     month: '',
     status: '',
     provider: '',
+    date: '', // Nuevo filtro para fecha específica
+    technician: '', // Nuevo filtro para técnico
   });
 
   const [filterOptions, setFilterOptions] = useState({
@@ -116,14 +125,13 @@ const Mantenimientos = () => {
     months: [],
     states: [],
     providers: [],
+    technicians: [], // Nuevos técnicos
   });
 
   useEffect(() => {
     // Generar años dinámicamente desde 2020 hasta el año actual + 1
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: currentYear - 2019 + 2 }, (_, i) => 2020 + i);
-
-    // Generar todos los meses del año en formato largo
     const months = Array.from({ length: 12 }, (_, i) => ({
       value: i + 1,
       name: new Date(0, i).toLocaleString('es-ES', { month: 'long' }),
@@ -140,16 +148,25 @@ const Mantenimientos = () => {
         const response = await api.get('/mantenimientos/filtros');
         setFilterOptions((prev) => ({
           ...prev,
-          states: response.data.states.map((item) => item.estado),
-          providers: response.data.providers.map((item) => ({
-            id: item.id,
-            name: item.name,
-          })),
+          states: response.data.states ? response.data.states.map((item) => item.estado) : [],
+          providers: response.data.providers
+            ? response.data.providers.map((item) => ({ id: item.id, name: item.name }))
+            : [],
+          technicians: response.data.technicians
+            ? response.data.technicians.map((item) => ({ id: item.id, name: item.name }))
+            : [],
         }));
       } catch (error) {
         console.error('Error al cargar los filtros:', error);
+        setFilterOptions((prev) => ({
+          ...prev,
+          states: [],
+          providers: [],
+          technicians: [],
+        }));
       }
     };
+
 
     fetchFilterOptions();
     fetchMantenimientos();
@@ -158,23 +175,28 @@ const Mantenimientos = () => {
   const fetchMantenimientos = async (filters = {}) => {
     try {
       const query = new URLSearchParams(filters).toString();
-      console.log('Query enviada al backend:', query); // Verificar qué filtros se están enviando
       const response = await api.get(`/mantenimientos?${query}`);
       setMantenimientos(response.data);
     } catch (err) {
       console.error('Error al cargar mantenimientos:', err);
     }
   };
-  
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     const updatedFilters = { ...filters, [name]: value };
-    console.log('Filtros actualizados:', updatedFilters); // Esto muestra los filtros
+
+    if (name === 'provider') {
+      updatedFilters.technician = ''; // Reset técnico si se selecciona proveedor
+    }
+
+    if (name === 'technician') {
+      updatedFilters.provider = ''; // Reset proveedor si se selecciona técnico
+    }
+
     setFilters(updatedFilters);
     fetchMantenimientos(updatedFilters);
   };
-  
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -189,11 +211,12 @@ const Mantenimientos = () => {
         <FilterContainer>
           <FilterSelect name="year" value={filters.year} onChange={handleFilterChange}>
             <option value="">Año</option>
-            {filterOptions.years.map((year) => (
+            {filterOptions.years?.map((year) => (
               <option key={year} value={year}>
                 {year}
               </option>
             ))}
+
           </FilterSelect>
           <FilterSelect name="month" value={filters.month} onChange={handleFilterChange}>
             <option value="">Mes</option>
@@ -203,7 +226,17 @@ const Mantenimientos = () => {
               </option>
             ))}
           </FilterSelect>
-          <FilterSelect name="status" value={filters.status} onChange={handleFilterChange}>
+          <FilterInput
+            type="date"
+            name="date"
+            value={filters.date}
+            onChange={handleFilterChange}
+          />
+          <FilterSelect
+            name="status"
+            value={filters.status}
+            onChange={handleFilterChange}
+          >
             <option value="">Estado</option>
             {filterOptions.states.map((state) => (
               <option key={state} value={state}>
@@ -211,11 +244,31 @@ const Mantenimientos = () => {
               </option>
             ))}
           </FilterSelect>
-          <FilterSelect name="provider" value={filters.provider} onChange={handleFilterChange}>
+          <FilterSelect
+            name="provider"
+            value={filters.provider}
+            onChange={handleFilterChange}
+            disabled={!!filters.technician}
+          >
             <option value="">Proveedor</option>
-            {filterOptions.providers.map((provider) => (
-              <option key={provider.id} value={provider.id}>
-                {provider.name}
+            {filterOptions.providers?.length > 0 &&
+              filterOptions.providers.map((provider) => (
+                <option key={provider.id} value={provider.id}>
+                  {provider.name}
+                </option>
+              ))}
+
+          </FilterSelect>
+          <FilterSelect
+            name="technician"
+            value={filters.technician}
+            onChange={handleFilterChange}
+            disabled={!!filters.provider}
+          >
+            <option value="">Técnico</option>
+            {filterOptions.technicians.map((technician) => (
+              <option key={technician.id} value={technician.id}>
+                {technician.name}
               </option>
             ))}
           </FilterSelect>
