@@ -1,84 +1,202 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
+import Navbar from './Navbar';
+import Sidebar from './Sidebar';
 import api from '../api/api';
 
-const Mantenimiento = () => {
-  const { id } = useParams();  // Obtener el id del activo desde la URL
-  const [activo, setActivo] = useState(null);
-  const [estadoMantenimiento, setEstadoMantenimiento] = useState('');
-  const navigate = useNavigate();
+const Container = styled.div`
+  display: flex;
+  margin-left: ${(props) => (props.$sidebarOpen ? '200px' : '0')};
+  flex-direction: column;
+  padding: 20px;
+  background-color: #f8f9fa;
+  font-family: 'Arial', sans-serif;
+  min-height: 100vh;
+  transition: margin-left 0.3s ease;
+`;
 
-  // Cargar los detalles del activo cuando se monta el componente
+const Title = styled.h2`
+  text-align: center;
+  font-size: 26px;
+  font-weight: bold;
+  color: #003366;
+`;
+
+const FilterContainer = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+`;
+
+const FilterSelect = styled.select`
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+`;
+
+const TableWrapper = styled.div`
+  margin-top: 30px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  padding: 20px;
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 0;
+`;
+
+const Table = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+`;
+
+const TableHeader = styled.th`
+  padding: 12px 20px;
+  background-color: #007bff;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  border: 1px solid #ddd;
+  text-transform: uppercase;
+  text-align: center;
+`;
+
+const TableRow = styled.tr`
+  background-color: ${(props) => (props.$isEven ? '#f9f9f9' : '#fff')};
+  &:hover {
+    background-color: #e0f7ff;
+    cursor: pointer;
+  }
+`;
+
+const TableData = styled.td`
+  padding: 12px 20px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  color: #555;
+`;
+
+const Button = styled.button`
+  padding: 12px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  width: auto;
+  max-width: 250px;
+  display: block;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+`;
+
+const Mantenimientos = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mantenimientos, setMantenimientos] = useState([]);
+  const [filters, setFilters] = useState({
+    year: '',
+    month: '',
+    status: '',
+    provider: '',
+  });
+
   useEffect(() => {
-    const fetchActivoDetails = async () => {
+    const fetchMantenimientos = async () => {
       try {
-        const response = await api.get(`/activos/${id}`);
-        setActivo(response.data);
+        const response = await api.get('/mantenimientos'); // Asegúrate de que la URL sea correcta
+        setMantenimientos(response.data);
       } catch (err) {
-        console.error('Error al cargar el activo:', err);
+        console.error('Error al cargar mantenimientos:', err);
       }
     };
 
-    fetchActivoDetails();
-  }, [id]);
+    fetchMantenimientos();
+  }, []);
 
-  const handleMantenimientoSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      // Aquí podrías enviar los datos del mantenimiento al backend
-      const response = await api.post(`/activos/mantenimiento`, {
-        id,
-        estadoMantenimiento,
-      });
-      console.log(response.data);
-      navigate('/menu');  // Redirigir al menú de activos después de completar el mantenimiento
-    } catch (err) {
-      console.error('Error al registrar el mantenimiento:', err);
-    }
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters({ ...filters, [name]: value });
   };
 
-  if (!activo) {
-    return <p>Cargando detalles del activo...</p>;
-  }
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h2>Mantenimiento del Activo</h2>
-      <h3>{activo.nombre}</h3>
-      <form onSubmit={handleMantenimientoSubmit}>
-        <div>
-          <label>Estado del Mantenimiento</label>
-          <input
-            type="text"
-            value={estadoMantenimiento}
-            onChange={(e) => setEstadoMantenimiento(e.target.value)}
-            placeholder="Escribe el estado del mantenimiento"
-            required
-            style={{
-              width: '100%',
-              padding: '10px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              backgroundColor: '#ffffff',
-            }}
-          />
-        </div>
-        <button
-          type="submit"
-          style={{
-            padding: '12px',
-            backgroundColor: '#007bff',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-        >
-          Registrar Mantenimiento
-        </button>
-      </form>
-    </div>
+    <>
+      <Navbar title="Menú de Mantenimientos" />
+      <Sidebar
+        open={sidebarOpen}
+        toggleSidebar={toggleSidebar}
+        currentMenu="mantenimientos"
+      />
+      <Container $sidebarOpen={sidebarOpen}>
+        <Title>Mantenimientos Registrados</Title>
+        <FilterContainer>
+          <FilterSelect name="year" value={filters.year} onChange={handleFilterChange}>
+            <option value="">Año</option>
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+          </FilterSelect>
+          <FilterSelect name="month" value={filters.month} onChange={handleFilterChange}>
+            <option value="">Mes</option>
+            <option value="01">Enero</option>
+            <option value="02">Febrero</option>
+          </FilterSelect>
+          <FilterSelect name="status" value={filters.status} onChange={handleFilterChange}>
+            <option value="">Estado</option>
+            <option value="Activo">Activo</option>
+            <option value="Terminado">Terminado</option>
+          </FilterSelect>
+          <FilterSelect name="provider" value={filters.provider} onChange={handleFilterChange}>
+            <option value="">Proveedor</option>
+          </FilterSelect>
+        </FilterContainer>
+
+        <TableWrapper>
+          <Table>
+            <thead>
+              <tr>
+                <TableHeader>Número de Mantenimiento</TableHeader>
+                <TableHeader>Proveedor</TableHeader>
+                <TableHeader>Técnico</TableHeader>
+                <TableHeader>Fecha Inicio</TableHeader>
+                <TableHeader>Fecha Fin</TableHeader>
+                <TableHeader>Estado</TableHeader>
+                <TableHeader>Número de Activos</TableHeader>
+              </tr>
+            </thead>
+            <tbody>
+              {mantenimientos.map((mantenimiento, index) => (
+                <TableRow key={mantenimiento.id} $isEven={index % 2 === 0}>
+                  <TableData>{mantenimiento.numero}</TableData>
+                  <TableData>{mantenimiento.proveedor}</TableData>
+                  <TableData>{mantenimiento.tecnico}</TableData>
+                  <TableData>{mantenimiento.fechaInicio}</TableData>
+                  <TableData>{mantenimiento.fechaFin}</TableData>
+                  <TableData>{mantenimiento.estado}</TableData>
+                  <TableData>{mantenimiento.numeroActivos}</TableData>
+                </TableRow>
+              ))}
+            </tbody>
+          </Table>
+        </TableWrapper>
+
+        <Button>Ver Mantenimiento</Button>
+      </Container>
+    </>
   );
 };
 
-export default Mantenimiento;
+export default Mantenimientos;

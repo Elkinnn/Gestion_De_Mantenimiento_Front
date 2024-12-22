@@ -50,7 +50,7 @@ function App() {
         />
 
         <Route
-          path="/mantenimiento"
+          path="/mantenimientos"
           element={
             <ProtectedRoute
               element={Mantenimiento}

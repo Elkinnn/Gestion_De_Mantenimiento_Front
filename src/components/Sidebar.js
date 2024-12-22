@@ -18,7 +18,7 @@ const SidebarContainer = styled.div`
   padding-top: 20px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* El contenido empieza desde arriba */
+  justify-content: flex-start;
 `;
 
 const HamburgerButton = styled.div`
@@ -45,7 +45,7 @@ const MenuItem = styled.div`
 
 const Sidebar = ({ open, toggleSidebar, selectedActivo, currentMenu }) => {
   const navigate = useNavigate();
-  const role = localStorage.getItem('role'); // Obtenemos el rol del usuario
+  const role = localStorage.getItem('role');
 
   const handleEdit = () => {
     if (!selectedActivo) {
@@ -56,9 +56,8 @@ const Sidebar = ({ open, toggleSidebar, selectedActivo, currentMenu }) => {
   };
 
   const handleMaintenance = () => {
-    navigate('/mantenimientos'); // Redirige directamente al nuevo componente
+    navigate('/mantenimientos');
   };
-  
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -70,24 +69,27 @@ const Sidebar = ({ open, toggleSidebar, selectedActivo, currentMenu }) => {
   return (
     <>
       <SidebarContainer open={open}>
-        {role === 'Admin' && currentMenu === 'activos' && (
+        {currentMenu === 'mantenimientos' ? (
+          <>
+            <MenuItem onClick={() => navigate('/crear-mantenimiento')}>Nuevo Mantenimiento</MenuItem>
+            <MenuItem onClick={() => navigate('/menu')}>Activos</MenuItem>
+            <MenuItem onClick={() => navigate('/reporte')}>Reportes de Gestión</MenuItem>
+            <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
+          </>
+        ) : currentMenu === 'activos' ? (
           <>
             <MenuItem onClick={() => navigate('/crear')}>Nuevo</MenuItem>
             <MenuItem onClick={handleEdit}>Editar</MenuItem>
             <MenuItem onClick={handleMaintenance}>Mantenimiento</MenuItem>
+            <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
           </>
-        )}
-        {role === 'Admin' && currentMenu !== 'activos' && (
+        ) : (
           <>
-            <MenuItem onClick={() => navigate('/reporte')}>Reportes de Gestión</MenuItem>
+            {role === 'Admin' && <MenuItem onClick={() => navigate('/reporte')}>Reportes de Gestión</MenuItem>}
+            {role === 'Tecnico' && <MenuItem onClick={handleMaintenance}>Mantenimiento</MenuItem>}
+            <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
           </>
         )}
-        {role === 'Tecnico' && (
-          <>
-            <MenuItem onClick={handleMaintenance}>Mantenimiento</MenuItem>
-          </>
-        )}
-        <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
       </SidebarContainer>
       <HamburgerButton onClick={toggleSidebar}>☰</HamburgerButton>
     </>
