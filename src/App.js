@@ -49,16 +49,16 @@ function App() {
           }
         />
 
-        {/* Ruta protegida para el mantenimiento (solo técnicos) */}
         <Route
           path="/mantenimiento"
           element={
             <ProtectedRoute
               element={Mantenimiento}
-              allowedRoles={['Tecnico']}
+              allowedRoles={['Admin', 'Tecnico']} // Permitir acceso a Admin y Técnico
             />
           }
         />
+
         <Route
           path="/crear"
           element={

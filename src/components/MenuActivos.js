@@ -134,7 +134,12 @@ const MenuActivos = () => {
 
   return (
     <>
-      <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} selectedActivo={selectedActivo} role={role} />
+     <Sidebar
+  open={sidebarOpen}
+  toggleSidebar={toggleSidebar}
+  selectedActivo={selectedActivo}
+  currentMenu="activos" // Indica el menú actual
+/>
       <Navbar title="Menú de Activos" />
       <Container $sidebarOpen={sidebarOpen}>
         <TableTitle>Activos Registrados</TableTitle>

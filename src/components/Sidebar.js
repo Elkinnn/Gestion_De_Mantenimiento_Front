@@ -43,7 +43,7 @@ const MenuItem = styled.div`
   }
 `;
 
-const Sidebar = ({ open, toggleSidebar, selectedActivo }) => {
+const Sidebar = ({ open, toggleSidebar, selectedActivo, currentMenu }) => {
   const navigate = useNavigate();
   const role = localStorage.getItem('role'); // Obtenemos el rol del usuario
 
@@ -56,35 +56,30 @@ const Sidebar = ({ open, toggleSidebar, selectedActivo }) => {
   };
 
   const handleMaintenance = () => {
-    if (!selectedActivo) {
-      showInfoNotification('Debes seleccionar un activo para mantenimiento.');
-      return;
-    }
-    navigate(`/mantenimiento/${selectedActivo}`);
+    navigate('/mantenimientos'); // Redirige directamente al nuevo componente
   };
-
-  const handleReport = () => {
-    navigate('/reporte'); // El reporte ya no requiere un activo seleccionado
-  };
+  
 
   const handleLogout = () => {
-    // Eliminar datos del localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('userName');
-    // Redirigir a la página de inicio de sesión
     navigate('/login');
   };
 
   return (
     <>
       <SidebarContainer open={open}>
-        {role === 'Admin' && (
+        {role === 'Admin' && currentMenu === 'activos' && (
           <>
             <MenuItem onClick={() => navigate('/crear')}>Nuevo</MenuItem>
             <MenuItem onClick={handleEdit}>Editar</MenuItem>
             <MenuItem onClick={handleMaintenance}>Mantenimiento</MenuItem>
-            <MenuItem onClick={handleReport}>Reportes de Gestión</MenuItem>
+          </>
+        )}
+        {role === 'Admin' && currentMenu !== 'activos' && (
+          <>
+            <MenuItem onClick={() => navigate('/reporte')}>Reportes de Gestión</MenuItem>
           </>
         )}
         {role === 'Tecnico' && (
@@ -92,7 +87,6 @@ const Sidebar = ({ open, toggleSidebar, selectedActivo }) => {
             <MenuItem onClick={handleMaintenance}>Mantenimiento</MenuItem>
           </>
         )}
-        {/* Aquí agregamos el "Cerrar sesión" como un MenuItem */}
         <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
       </SidebarContainer>
       <HamburgerButton onClick={toggleSidebar}>☰</HamburgerButton>
