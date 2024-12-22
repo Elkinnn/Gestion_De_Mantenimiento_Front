@@ -24,6 +24,24 @@ const Container = styled.div`
   padding-bottom: 60px; /* Espacio para el footer */
 `;
 
+const FiltersContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  background-color: #ffffff;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+`;
+
+const FiltersLabel = styled.span`
+  font-size: 16px;
+  font-weight: bold;
+  color: #343a40;
+`;
+
 const TableWrapper = styled.div`
   margin-top: 30px;
   border-radius: 10px;
@@ -175,8 +193,11 @@ const MenuActivos = () => {
         <TableTitle>Activos Registrados</TableTitle>
         {error && <p style={{ color: 'red' }}>{error}</p>}
 
-        <FiltroComponent filtros={filters} handleFilterChange={handleFilterChange} />
-        <LimpiarComponent handleClear={handleClearFilters} />
+        <FiltersContainer>
+          <FiltersLabel>Filtrar por:</FiltersLabel>
+          <FiltroComponent filtros={filters} handleFilterChange={handleFilterChange} />
+          <LimpiarComponent handleClear={handleClearFilters} />
+        </FiltersContainer>
 
         <TableWrapper>
           <Table>
