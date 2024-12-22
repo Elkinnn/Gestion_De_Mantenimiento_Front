@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaUser, FaKey } from 'react-icons/fa'; // Importar los íconos
 import api from '../api/api';
 
 const Login = () => {
@@ -14,16 +15,17 @@ const Login = () => {
 
     try {
       const response = await api.post('/auth/login', { username, password });
-      const { token, role } = response.data;
-    
-      // Guardar token y rol en localStorage
+      console.log('Datos de la respuesta:', response.data); // Verifica lo que el servidor te está enviando
+      const { token, role, userName } = response.data;
+
+      // Guardar token, rol y nombre en localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
-    
-      if (role === 'Admin') {
-        navigate('/dashboard');
-      } else if (role === 'Tecnico') {
-        navigate('/menu');
+      localStorage.setItem('userName', userName); // Guardar el nombre del usuario
+
+      // Redirigir dependiendo del rol
+      if (role === 'Admin' || role === 'Tecnico') {
+        navigate('/menu'); // Redirige tanto a Admin como a Tecnico al menú
       } else {
         setError('Rol desconocido. Contacta al administrador.');
       }
@@ -39,85 +41,93 @@ const Login = () => {
   return (
     <div
       style={{
-        maxWidth: '400px',
-        margin: '0 auto',
-        padding: '20px',
-        textAlign: 'center',
-        fontFamily: 'Arial, sans-serif',
-        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-        borderRadius: '8px',
-        backgroundColor: '#ffffff', // Fondo blanco
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh', // Asegura que ocupe toda la altura de la pantalla
+        backgroundColor: '#f4f4f4', // Color de fondo
       }}
     >
-      <h2 style={{ marginBottom: '20px', color: '#333', fontWeight: 'bold', fontSize: '24px' }}>
-        Iniciar sesión
-      </h2>
-      <form
-        onSubmit={handleSubmit}
+      <div
         style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
+          maxWidth: '400px',
+          width: '100%',
           padding: '20px',
-          boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.1)',
+          textAlign: 'center',
+          fontFamily: 'Arial, sans-serif',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
           borderRadius: '8px',
-          backgroundColor: '#f4f4f4',
+          backgroundColor: '#ffffff', // Fondo blanco
+          border: '2px solid black', // Borde negro
         }}
       >
-        <div>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Usuario</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Usuario"
-            required
-            style={{
-              width: '100%',
-              padding: '10px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              backgroundColor: '#ffffff', // Fondo blanco para el input
-              fontSize: '16px',
-            }}
-          />
-        </div>
-        <div>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Contraseña</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Contraseña"
-            required
-            style={{
-              width: '100%',
-              padding: '10px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              backgroundColor: '#ffffff', // Fondo blanco para el input
-              fontSize: '16px',
-            }}
-          />
-        </div>
-        <button
-          type="submit"
+        <h2 style={{ marginBottom: '20px', color: '#333', fontWeight: 'bold', fontSize: '24px' }}>
+          Iniciar Sesión
+        </h2>
+        <form
+          onSubmit={handleSubmit}
           style={{
-            padding: '12px',
-            backgroundColor: '#007bff',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            padding: '20px',
           }}
         >
-          Iniciar sesión
-        </button>
-      </form>
-      {error && (
-        <p style={{ color: 'red', marginTop: '10px', fontWeight: 'bold' }}>{error}</p>
-      )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <FaUser style={{ fontSize: '20px', color: '#333' }} />
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Usuario"
+              required
+              style={{
+                flex: 1,
+                padding: '10px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                backgroundColor: '#ffffff', // Fondo blanco para el input
+                fontSize: '16px',
+              }}
+            />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <FaKey style={{ fontSize: '20px', color: '#333' }} />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Contraseña"
+              required
+              style={{
+                flex: 1,
+                padding: '10px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                backgroundColor: '#ffffff', // Fondo blanco para el input
+                fontSize: '16px',
+              }}
+            />
+          </div>
+          <button
+            type="submit"
+            style={{
+              padding: '12px',
+              backgroundColor: '#007bff',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '16px',
+            }}
+          >
+            Ingresar
+          </button>
+        </form>
+        {error && (
+          <p style={{ color: 'red', marginTop: '10px', fontWeight: 'bold' }}>{error}</p>
+        )}
+      </div>
     </div>
   );
 };
