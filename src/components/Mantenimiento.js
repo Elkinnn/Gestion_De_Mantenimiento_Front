@@ -178,18 +178,25 @@ const Mantenimientos = () => {
               </tr>
             </thead>
             <tbody>
-              {mantenimientos.map((mantenimiento, index) => (
-                <TableRow key={mantenimiento.id} $isEven={index % 2 === 0}>
-                  <TableData>{mantenimiento.numero}</TableData>
-                  <TableData>{mantenimiento.proveedor}</TableData>
-                  <TableData>{mantenimiento.tecnico}</TableData>
-                  <TableData>{mantenimiento.fechaInicio}</TableData>
-                  <TableData>{mantenimiento.fechaFin}</TableData>
-                  <TableData>{mantenimiento.estado}</TableData>
-                  <TableData>{mantenimiento.numeroActivos}</TableData>
-                </TableRow>
-              ))}
+              {Array.isArray(mantenimientos) && mantenimientos.length > 0 ? (
+                mantenimientos.map((mantenimiento) => (
+                  <TableRow
+                    key={mantenimiento.mantenimiento_id}
+                    $isEven={mantenimiento.mantenimiento_id % 2 === 0}
+                  >
+                    <TableData>{mantenimiento.numero_mantenimiento}</TableData><TableData>{mantenimiento.proveedor || 'N/A'}</TableData><TableData>{mantenimiento.tecnico || 'N/A'}</TableData><TableData>{new Date(mantenimiento.fecha_inicio).toLocaleString()}</TableData><TableData>{new Date(mantenimiento.fecha_fin).toLocaleString()}</TableData><TableData>{mantenimiento.estado}</TableData><TableData>{mantenimiento.numero_activos}</TableData>
+                  </TableRow>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: '#555' }}>
+                    No hay mantenimientos registrados.
+                  </td>
+                </tr>
+              )}
             </tbody>
+
+
           </Table>
         </TableWrapper>
 
