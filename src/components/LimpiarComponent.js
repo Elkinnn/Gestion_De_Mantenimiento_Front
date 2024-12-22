@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 const ClearButton = styled.button`
   padding: 10px 20px;
-  background-color: #dc3545;
+  background-color: #0056b3;
   color: white;
   border: none;
   border-radius: 5px;
@@ -11,7 +11,7 @@ const ClearButton = styled.button`
   cursor: pointer;
 
   &:hover {
-    background-color: #c82333;
+    background-color: #0056b3;
   }
 `;
 

@@ -100,7 +100,14 @@ const Button = styled.button`
 
 const MenuActivos = () => {
   const [activos, setActivos] = useState([]);
+  const [filteredActivos, setFilteredActivos] = useState([]);
   const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({
+    proceso_compra: '',
+    proveedor: '',
+    tipo: '',
+    estado: ''
+  });
   const [selectedActivo, setSelectedActivo] = useState(null); // Solo un activo seleccionado
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [role] = useState(localStorage.getItem('role'));
@@ -111,6 +118,7 @@ const MenuActivos = () => {
         const response = await api.get('/activos/menu');
         console.log('Datos recibidos:', response.data); // Verifica la estructura de los datos
         setActivos(response.data);
+        setFilteredActivos(response.data);
       } catch (err) {
         setError('Error al cargar los activos');
       }
@@ -118,7 +126,6 @@ const MenuActivos = () => {
 
     fetchActivos();
   }, []);
-
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -133,6 +140,32 @@ const MenuActivos = () => {
     });
   };
 
+  const handleFilterChange = (event) => {
+    const { name, value } = event.target;
+    const newFilters = { ...filters, [name]: value };
+    setFilters(newFilters);
+
+    // Filtrar activos según los filtros seleccionados
+    const filtered = activos.filter((activo) => {
+      return (
+        (newFilters.proceso_compra === '' || activo.proceso_compra.includes(newFilters.proceso_compra)) &&
+        (newFilters.proveedor === '' || activo.proveedor.includes(newFilters.proveedor)) &&
+        (newFilters.tipo === '' || activo.tipo.includes(newFilters.tipo)) &&
+        (newFilters.estado === '' || activo.estado.includes(newFilters.estado))
+      );
+    });
+    setFilteredActivos(filtered);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      proceso_compra: '',
+      proveedor: '',
+      tipo: '',
+      estado: ''
+    });
+    setFilteredActivos(activos);
+  };
 
   return (
     <>
@@ -141,6 +174,9 @@ const MenuActivos = () => {
       <Container $sidebarOpen={sidebarOpen}>
         <TableTitle>Activos Registrados</TableTitle>
         {error && <p style={{ color: 'red' }}>{error}</p>}
+
+        <FiltroComponent filtros={filters} handleFilterChange={handleFilterChange} />
+        <LimpiarComponent handleClear={handleClearFilters} />
 
         <TableWrapper>
           <Table>
@@ -156,8 +192,8 @@ const MenuActivos = () => {
               </tr>
             </thead>
             <tbody>
-              {Array.isArray(activos) && activos.length > 0 ? (
-                activos.map((activo, index) => (
+              {Array.isArray(filteredActivos) && filteredActivos.length > 0 ? (
+                filteredActivos.map((activo, index) => (
                   <TableRow
                     key={activo.id} // La clave debe ser única, usamos el id de cada activo
                     $isEven={index % 2 === 0}
