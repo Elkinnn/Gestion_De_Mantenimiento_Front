@@ -9,6 +9,7 @@ import GestionActivo from './components/GestionActivos';
 import CrearActivos from './components/CrearActivos';
 import EditarActivos from './components/EditarActivos';
 import Notification from './components/Notification';
+import ActivosLotes from './components/ActivosLotes';
 
 function App() {
   const token = localStorage.getItem('token'); // Obtener el token de localStorage si está presente
@@ -74,6 +75,15 @@ function App() {
             <ProtectedRoute
               element={CrearActivos}
               allowedRoles={['Admin']}
+            />
+          }
+        />
+         <Route
+          path="activos/lotes"
+          element={
+            <ProtectedRoute 
+              element={ActivosLotes} 
+              allowedRoles={['Admin']} 
             />
           }
         />
