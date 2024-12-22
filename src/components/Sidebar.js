@@ -72,6 +72,7 @@ const Sidebar = ({ open, toggleSidebar, selectedActivo, currentMenu }) => {
         {role === 'Tecnico' ? (
           <>
             <MenuItem onClick={() => navigate('/crear-mantenimiento')}>Nuevo Mantenimiento</MenuItem>
+            <MenuItem onClick={handleMaintenance}>Mantenimientos</MenuItem> {/* Nueva opción para Mantenimientos */}
             <MenuItem onClick={() => navigate('/menu')}>Activos</MenuItem>
             <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
           </>
@@ -96,6 +97,7 @@ const Sidebar = ({ open, toggleSidebar, selectedActivo, currentMenu }) => {
             <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
           </>
         )}
+
       </SidebarContainer>
       <HamburgerButton onClick={toggleSidebar}>☰</HamburgerButton>
     </>

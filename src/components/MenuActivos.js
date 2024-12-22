@@ -162,7 +162,7 @@ const MenuActivos = () => {
                     key={activo.id}
                     $isEven={index % 2 === 0}
                     $selected={selectedActivo === activo.id}
-                    onClick={() => handleRowClick(activo.id)}
+                    onClick={role !== 'Tecnico' ? () => handleRowClick(activo.id) : undefined} // Deshabilitar clic para Técnicos
                   >
                     <TableData>{activo.proceso_compra}</TableData>
                     <TableData>{activo.codigo}</TableData>
@@ -181,6 +181,7 @@ const MenuActivos = () => {
                 </tr>
               )}
             </tbody>
+
           </Table>
         </TableWrapper>
 
