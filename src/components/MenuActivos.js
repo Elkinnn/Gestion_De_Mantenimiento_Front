@@ -4,6 +4,8 @@ import styled from 'styled-components';
 import Sidebar from './Sidebar'; // Importamos Sidebar
 import Navbar from './Navbar';  // Importamos el Navbar
 import Footer from './Footer';  // Importamos el Footer
+import FiltroComponent from './FiltroComponent';
+import LimpiarComponent from './LimpiarComponent';
 import { showInfoNotification } from './Notification';
 
 const Container = styled.div`

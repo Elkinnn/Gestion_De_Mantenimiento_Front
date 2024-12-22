@@ -156,7 +156,7 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true }) => {
         const { name, value } = e.target;
 
         if (name === 'tipo_activo_id' && value !== prevTipo) {
-            showInfoNotification('El tipo ha cambiado. Por favor, asegúrate de actualizar la serie del activo.');
+            showInfoNotification('El tipo ha cambiado. Por favor, asegúrate de actualizar el número de serie del activo.');
             setPrevTipo(value);
         }
 
@@ -255,7 +255,7 @@ const CrearActivos = ({ initialData = {}, onSuccess, showFooter = true }) => {
                             name="nombre"
                             value={formData.nombre || ''}
                             onChange={handleChange}
-                            placeholder="Ingrese la serie del activo"
+                            placeholder="Ingrese el número de serie del activo"
                         />
 
                         <Label>Estado</Label>
