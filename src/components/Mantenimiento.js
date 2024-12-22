@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
+import Footer from './Footer';
 import api from '../api/api';
 
 const Container = styled.div`
   display: flex;
   margin-left: ${(props) => (props.$sidebarOpen ? '200px' : '0')};
   flex-direction: column;
-  padding: 20px;
+  padding: 80px 20px 20px;
   background-color: #f8f9fa;
   font-family: 'Arial', sans-serif;
   min-height: 100vh;
@@ -19,27 +20,61 @@ const Title = styled.h2`
   text-align: center;
   font-size: 26px;
   font-weight: bold;
-  color: #003366;
+  color: #343a40;
+  margin-bottom: 20px;
+  margin-top: 20px; /* Espaciado adicional para que no quede tapado */
+`;
+
+const FilterWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
 `;
 
 const FilterContainer = styled.div`
   display: flex;
+  align-items: center;
   gap: 10px;
-  margin-bottom: 20px;
+`;
+
+const FilterLabel = styled.span`
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  white-space: nowrap;
 `;
 
 const FilterSelect = styled.select`
-  padding: 10px;
-  border-radius: 4px;
+  padding: 8px 15px;
+  border-radius: 8px;
   border: 1px solid #ccc;
-  background-color: #fff;
+  background-color: #f9f9f9;
+  font-size: 14px;
+  flex: 1;
 `;
 
 const FilterInput = styled.input`
-  padding: 10px;
-  border-radius: 4px;
+  padding: 8px 15px;
+  border-radius: 8px;
   border: 1px solid #ccc;
-  background-color: #fff;
+  background-color: #f9f9f9;
+  font-size: 14px;
+  flex: 1;
+`;
+
+const ClearButton = styled.button`
+  padding: 8px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  flex: none;
+
+  &:hover {
+    background-color: #0056b3;
+  }
 `;
 
 const TableWrapper = styled.div`
@@ -116,8 +151,8 @@ const Mantenimientos = () => {
     month: '',
     status: '',
     provider: '',
-    date: '', // Nuevo filtro para fecha específica
-    technician: '', // Nuevo filtro para técnico
+    date: '',
+    technician: '',
   });
 
   const [filterOptions, setFilterOptions] = useState({
@@ -125,11 +160,10 @@ const Mantenimientos = () => {
     months: [],
     states: [],
     providers: [],
-    technicians: [], // Nuevos técnicos
+    technicians: [],
   });
 
   useEffect(() => {
-    // Generar años dinámicamente desde 2020 hasta el año actual + 1
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: currentYear - 2019 + 2 }, (_, i) => 2020 + i);
     const months = Array.from({ length: 12 }, (_, i) => ({
@@ -158,15 +192,8 @@ const Mantenimientos = () => {
         }));
       } catch (error) {
         console.error('Error al cargar los filtros:', error);
-        setFilterOptions((prev) => ({
-          ...prev,
-          states: [],
-          providers: [],
-          technicians: [],
-        }));
       }
     };
-
 
     fetchFilterOptions();
     fetchMantenimientos();
@@ -186,12 +213,21 @@ const Mantenimientos = () => {
     const { name, value } = e.target;
     const updatedFilters = { ...filters, [name]: value };
 
+    if (name === 'date' && value) {
+      updatedFilters.year = '';
+      updatedFilters.month = '';
+    }
+
+    if ((name === 'year' || name === 'month') && value) {
+      updatedFilters.date = '';
+    }
+
     if (name === 'provider') {
-      updatedFilters.technician = ''; // Reset técnico si se selecciona proveedor
+      updatedFilters.technician = '';
     }
 
     if (name === 'technician') {
-      updatedFilters.provider = ''; // Reset proveedor si se selecciona técnico
+      updatedFilters.provider = '';
     }
 
     setFilters(updatedFilters);
@@ -202,77 +238,102 @@ const Mantenimientos = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
+  const handleClearFilters = () => {
+    const clearedFilters = {
+      year: '',
+      month: '',
+      status: '',
+      provider: '',
+      date: '',
+      technician: '',
+    };
+    setFilters(clearedFilters);
+    fetchMantenimientos(clearedFilters);
+  };
+
   return (
     <>
       <Navbar title="Menú de Mantenimientos" />
       <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} currentMenu="mantenimientos" />
       <Container $sidebarOpen={sidebarOpen}>
         <Title>Mantenimientos Registrados</Title>
-        <FilterContainer>
-          <FilterSelect name="year" value={filters.year} onChange={handleFilterChange}>
-            <option value="">Año</option>
-            {filterOptions.years?.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-
-          </FilterSelect>
-          <FilterSelect name="month" value={filters.month} onChange={handleFilterChange}>
-            <option value="">Mes</option>
-            {filterOptions.months.map((month) => (
-              <option key={month.value} value={month.value}>
-                {month.name}
-              </option>
-            ))}
-          </FilterSelect>
-          <FilterInput
-            type="date"
-            name="date"
-            value={filters.date}
-            onChange={handleFilterChange}
-          />
-          <FilterSelect
-            name="status"
-            value={filters.status}
-            onChange={handleFilterChange}
-          >
-            <option value="">Estado</option>
-            {filterOptions.states.map((state) => (
-              <option key={state} value={state}>
-                {state}
-              </option>
-            ))}
-          </FilterSelect>
-          <FilterSelect
-            name="provider"
-            value={filters.provider}
-            onChange={handleFilterChange}
-            disabled={!!filters.technician}
-          >
-            <option value="">Proveedor</option>
-            {filterOptions.providers?.length > 0 &&
-              filterOptions.providers.map((provider) => (
+        <FilterWrapper>
+          <FilterContainer>
+            <FilterLabel>Filtrar por:</FilterLabel>
+            <FilterSelect
+              name="year"
+              value={filters.year}
+              onChange={handleFilterChange}
+              disabled={!!filters.date}
+            >
+              <option value="">Año</option>
+              {filterOptions.years?.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </FilterSelect>
+            <FilterSelect
+              name="month"
+              value={filters.month}
+              onChange={handleFilterChange}
+              disabled={!!filters.date}
+            >
+              <option value="">Mes</option>
+              {filterOptions.months.map((month) => (
+                <option key={month.value} value={month.value}>
+                  {month.name}
+                </option>
+              ))}
+            </FilterSelect>
+            <FilterInput
+              type="date"
+              name="date"
+              value={filters.date}
+              onChange={handleFilterChange}
+              disabled={!!filters.year || !!filters.month}
+            />
+            <FilterSelect
+              name="status"
+              value={filters.status}
+              onChange={handleFilterChange}
+            >
+              <option value="">Estado</option>
+              {filterOptions.states.map((state) => (
+                <option key={state} value={state}>
+                  {state}
+                </option>
+              ))}
+            </FilterSelect>
+            <FilterSelect
+              name="provider"
+              value={filters.provider}
+              onChange={handleFilterChange}
+              disabled={!!filters.technician}
+            >
+              <option value="">Proveedor</option>
+              {filterOptions.providers?.map((provider) => (
                 <option key={provider.id} value={provider.id}>
                   {provider.name}
                 </option>
               ))}
-
-          </FilterSelect>
-          <FilterSelect
-            name="technician"
-            value={filters.technician}
-            onChange={handleFilterChange}
-            disabled={!!filters.provider}
-          >
-            <option value="">Técnico</option>
-            {filterOptions.technicians.map((technician) => (
-              <option key={technician.id} value={technician.id}>
-                {technician.name}
-              </option>
-            ))}
-          </FilterSelect>
-        </FilterContainer>
+            </FilterSelect>
+            <FilterSelect
+              name="technician"
+              value={filters.technician}
+              onChange={handleFilterChange}
+              disabled={!!filters.provider}
+            >
+              <option value="">Técnico</option>
+              {filterOptions.technicians?.map((technician) => (
+                <option key={technician.id} value={technician.id}>
+                  {technician.name}
+                </option>
+              ))}
+            </FilterSelect>
+            <ClearButton onClick={handleClearFilters}>Limpiar</ClearButton>
+          </FilterContainer>
+        </FilterWrapper>
 
         <TableWrapper>
           <Table>
@@ -316,6 +377,7 @@ const Mantenimientos = () => {
 
         <Button>Ver Mantenimiento</Button>
       </Container>
+      <Footer />
     </>
   );
 };
