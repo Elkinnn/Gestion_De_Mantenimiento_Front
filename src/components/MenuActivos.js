@@ -146,7 +146,7 @@ const MenuActivos = () => {
               <tr>
                 <TableHeader>Proceso de Compra</TableHeader>
                 <TableHeader>Código</TableHeader>
-                <TableHeader>Nombre</TableHeader>
+                <TableHeader>Serie</TableHeader>
                 <TableHeader>Estado</TableHeader>
                 <TableHeader>Ubicación</TableHeader>
                 <TableHeader>Tipo</TableHeader>
