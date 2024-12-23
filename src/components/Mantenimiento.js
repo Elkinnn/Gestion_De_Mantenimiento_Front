@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
+import { useNavigate } from 'react-router-dom';
+import { showInfoNotification } from './Notification';
 import api from '../api/api';
 
 const Container = styled.div`
@@ -107,12 +109,14 @@ const TableHeader = styled.th`
 `;
 
 const TableRow = styled.tr`
-  background-color: ${(props) => (props.$isEven ? '#f9f9f9' : '#fff')};
+  background-color: ${(props) =>
+    props.$selected ? '#d6eaf8' : props.$isEven ? '#f9f9f9' : '#fff'};
   &:hover {
-    background-color: #e0f7ff;
+    background-color: ${(props) => (props.$selected ? '#d6eaf8' : '#f1f1f1')};
     cursor: pointer;
   }
 `;
+
 
 const TableData = styled.td`
   padding: 12px 20px;
@@ -145,7 +149,9 @@ const Button = styled.button`
 
 const Mantenimientos = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const navigate = useNavigate();
   const [mantenimientos, setMantenimientos] = useState([]);
+  const [selectedMantenimiento, setSelectedMantenimiento] = useState(null);
   const [filters, setFilters] = useState({
     year: '',
     month: '',
@@ -154,6 +160,7 @@ const Mantenimientos = () => {
     date: '',
     technician: '',
   });
+
 
   const [filterOptions, setFilterOptions] = useState({
     years: [],
@@ -203,11 +210,13 @@ const Mantenimientos = () => {
     try {
       const query = new URLSearchParams(filters).toString();
       const response = await api.get(`/mantenimientos?${query}`);
+      console.log('Datos de la API:', response.data); // Inspecciona los datos devueltos por la API
       setMantenimientos(response.data);
     } catch (err) {
       console.error('Error al cargar mantenimientos:', err);
     }
   };
+
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -250,6 +259,23 @@ const Mantenimientos = () => {
     setFilters(clearedFilters);
     fetchMantenimientos(clearedFilters);
   };
+
+  const handleRowClick = (mantenimientoId) => {
+    setSelectedMantenimiento((prevSelected) => {
+      const newSelected = prevSelected === mantenimientoId ? null : mantenimientoId;
+
+      const mantenimientoSeleccionado = mantenimientos.find(
+        (mantenimiento) => mantenimiento.mantenimiento_id === newSelected
+      );
+
+      console.log('Mantenimiento seleccionado:', mantenimientoSeleccionado || 'Ninguno seleccionado');
+      return newSelected;
+    });
+  };
+
+
+
+
 
   return (
     <>
@@ -350,10 +376,12 @@ const Mantenimientos = () => {
             </thead>
             <tbody>
               {Array.isArray(mantenimientos) && mantenimientos.length > 0 ? (
-                mantenimientos.map((mantenimiento) => (
+                mantenimientos.map((mantenimiento, index) => (
                   <TableRow
                     key={mantenimiento.mantenimiento_id}
-                    $isEven={mantenimiento.mantenimiento_id % 2 === 0}
+                    $isEven={index % 2 === 0}
+                    $selected={selectedMantenimiento === mantenimiento.mantenimiento_id} // Asegúrate de pasar esto
+                    onClick={() => handleRowClick(mantenimiento.mantenimiento_id)} // Maneja el clic en la fila
                   >
                     <TableData>{mantenimiento.numero_mantenimiento}</TableData>
                     <TableData>{mantenimiento.proveedor || 'N/A'}</TableData>
@@ -363,6 +391,7 @@ const Mantenimientos = () => {
                     <TableData>{mantenimiento.estado}</TableData>
                     <TableData>{mantenimiento.numero_activos}</TableData>
                   </TableRow>
+
                 ))
               ) : (
                 <tr>
@@ -372,10 +401,34 @@ const Mantenimientos = () => {
                 </tr>
               )}
             </tbody>
+
           </Table>
         </TableWrapper>
 
-        <Button>Ver Mantenimiento</Button>
+        <Button
+  onClick={() => {
+    if (!selectedMantenimiento) {
+      showInfoNotification('Debes seleccionar un mantenimiento para continuar.');
+    } else {
+      const mantenimientoSeleccionado = mantenimientos.find(
+        (mantenimiento) => mantenimiento.mantenimiento_id === selectedMantenimiento
+      );
+
+      console.log('Mantenimiento seleccionado:', mantenimientoSeleccionado); // Verifica los datos seleccionados
+
+      navigate('/vermantenimiento', { state: mantenimientoSeleccionado }); // Enviar datos como estado
+    }
+  }}
+>
+  Ver Mantenimiento
+</Button>
+
+
+
+
+
+
+
       </Container>
       <Footer />
     </>

@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './components/Login';
 import MenuActivos from './components/MenuActivos';
 import Mantenimiento from './components/Mantenimiento';
+import NuevoMantenimiento from './components/VerMantenimiento';
 import ProtectedRoute from './components/ProtectedRoute';
 import GestionActivo from './components/GestionActivos';
 import CrearActivos from './components/CrearActivos';
@@ -58,6 +59,17 @@ function App() {
             />
           }
         />
+
+        <Route
+          path="/vermantenimiento"
+          element={
+            <ProtectedRoute
+              element={NuevoMantenimiento}
+              allowedRoles={['Admin', 'Tecnico']}
+            />
+          }
+        />
+
 
         {/* Ruta protegida para gestionar activos */}
         <Route

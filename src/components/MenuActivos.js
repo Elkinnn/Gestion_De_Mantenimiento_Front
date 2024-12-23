@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import { useNavigate } from 'react-router-dom';
 import { showInfoNotification } from './Notification';
 
 const Container = styled.div`
@@ -102,6 +103,7 @@ const MenuActivos = () => {
   const [selectedActivo, setSelectedActivo] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [role] = useState(localStorage.getItem('role')); // Obtiene el rol del usuario
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchActivos = async () => {
@@ -192,8 +194,8 @@ const MenuActivos = () => {
               if (!selectedActivo) {
                 showInfoNotification('Debes seleccionar un activo para generar el reporte.');
               } else {
-                console.log(`Generando reporte para el activo con ID: ${selectedActivo}`);
-                window.location.href = `/reporte/${selectedActivo}`;
+                console.log(`Activo seleccionado: ${selectedActivo}`);
+                navigate(`/vermantenimiento${selectedActivo}`); // Redirige a la ruta de NuevoMantenimiento
               }
             }}
           >
