@@ -1,10 +1,11 @@
-import React, { useState} from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import 'react-toastify/dist/ReactToastify.css';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import BackButton from './BackButton';
 import { showSuccessNotification, showErrorNotification } from './Notification';
+import * as XLSX from 'xlsx';
 const token = localStorage.getItem('token');
 
 // Estilo del contenedor principal
@@ -102,80 +103,123 @@ const ActionButton = styled.button`
     background-color: #0056b3;
   }
 `;
+
 const ActivosLotes = () => {
-    const [file, setFile] = useState(null);
-  
-    const handleFileChange = (event) => {
-      setFile(event.target.files[0]);
-    };
-  
-    const handleUpload = async () => {
-      if (!file) {
-        showErrorNotification('Por favor, seleccione un archivo antes de cargar.');
+  const [file, setFile] = useState(null);
+
+  const expectedColumns = ["proceso_compra", "nombre", "estado", "ubicacion_id", "tipo_activo_id", "proveedor_id"];
+
+  const handleFileChange = async (event) => {
+    const selectedFile = event.target.files[0];
+
+    if (!selectedFile) {
+      setFile(null);
+      return;
+    }
+
+    // Validar formato del archivo
+    const allowedExtensions = ['.xlsx', '.xls'];
+    const fileExtension = selectedFile.name.slice(selectedFile.name.lastIndexOf('.')).toLowerCase();
+
+    if (!allowedExtensions.includes(fileExtension)) {
+      showErrorNotification('Error al cargar: El formato es incorrecto.');
+      setFile(null);
+      return;
+    }
+
+    // Leer el archivo Excel para validar las columnas
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+      const fileColumns = jsonData[0]; // Primera fila como encabezados
+
+      // Validar si las columnas esperadas están presentes
+      const missingColumns = expectedColumns.filter((col) => !fileColumns.includes(col));
+
+      if (missingColumns.length > 0) {
+        showErrorNotification(`Error al cargar:  El
+ formato es incorrecto.`);
+        setFile(null);
         return;
       }
-  
-      if (file.size > 2 * 1024 * 1024) {
-        showErrorNotification('Error al cargar: El archivo pesa más de 2mb.');
-        return;
-      }
-  
-      const formData = new FormData();
-      formData.append('file', file);
-  
-      try {
-        const response = await fetch('http://localhost:5000/api/activos/upload-lotes', {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'Authorization': `Bearer ${token}`,  // Enviar el token en el encabezado
-          },
-        });
 
-        const responseData = await response.json();
-
-        if (response.ok) {
-          showSuccessNotification('Activos cargados con éxito.');
-        } else {
-          const { errors } = responseData;
-          if (errors.includes('missing_fields')) {
-            showErrorNotification('Debe completar todos los campos.');
-          } else if (errors.includes('duplicate_series')) {
-            showErrorNotification('Error al cargar: Existen serie de activos repetitivos.');
-          } else if (errors.includes('invalid_format')) {
-            showErrorNotification('Error al cargar: El formato es incorrecto.');
-          } else if (errors.includes('exceeds_limit')) {
-            showErrorNotification('Error al cargar: El archivo contiene más de 50 activos.');
-          } else {
-            showErrorNotification('Hubo un error al cargar el archivo.');
-          }
-        }
-      } catch (error) {
-        showErrorNotification('Error al cargar el archivo.');
-      }
+      setFile(selectedFile);
     };
-  
-    return (
-      <>
-        <Navbar title="Cargar Activos por Lote" />
-        <BackButton />
-        <Container>
-          <FormCard>
-            <FormTitle>Nuevo Activo</FormTitle>
-            <Label>Cargar por lote (Archivo Excel)</Label>
-            <FileInputContainer>
-              <FileName>{file ? file.name : 'Ningún archivo seleccionado'}</FileName>
-              <SelectFileButton>
-                Seleccione el archivo
-                <HiddenInput type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
-              </SelectFileButton>
-            </FileInputContainer>
-            <ActionButton onClick={handleUpload}>Cargar Lote</ActionButton>
-          </FormCard>
-        </Container>
-        <Footer />
-      </>
-    );
+
+    reader.readAsArrayBuffer(selectedFile);
   };
-  
-  export default ActivosLotes;
+
+  const handleUpload = async () => {
+    if (!file) {
+      showErrorNotification('Por favor, seleccione un archivo antes de cargar.');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      showErrorNotification('Error al cargar: El archivo pesa más de 2mb.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/activos/upload-lotes', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+       const responseData = await response.json();
+
+    if (response.ok) {
+      showSuccessNotification('Activos cargados con éxito.');
+    } else {
+      const { errors, message } = responseData;
+      if (errors.includes('missing_fields')) {
+        showErrorNotification('Debe completar todos los campos.');
+      } else if (errors.includes('duplicate_names')) {
+        showErrorNotification('Error al cargar: Existen serie de activos repetitivos.');
+      } else if (errors.includes('invalid_format')) {
+        showErrorNotification('Error al cargar: El formato es incorrecto.');
+      } else if (errors.includes('exceeds_limit')) {
+        showErrorNotification('Error al cargar: El archivo contiene más de 50 activos.');
+      } else {
+        showErrorNotification(message || 'Hubo un error al cargar el archivo.');
+      }
+    }
+  } catch (error) {
+    console.error('Error durante la carga del archivo:', error);
+    showErrorNotification('Error al cargar el archivo.');
+  }
+};
+  return (
+    <>
+      <Navbar title="Cargar Activos por Lote" />
+      <BackButton />
+      <Container>
+        <FormCard>
+          <FormTitle>Nuevo Activo</FormTitle>
+          <Label>Cargar por lote (Archivo Excel)</Label>
+          <FileInputContainer>
+            <FileName>{file ? file.name : 'Ningún archivo seleccionado'}</FileName>
+            <SelectFileButton>
+              Seleccione el archivo
+              <HiddenInput type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
+            </SelectFileButton>
+          </FileInputContainer>
+          <ActionButton onClick={handleUpload}>Cargar Lote</ActionButton>
+        </FormCard>
+      </Container>
+      <Footer />
+    </>
+  );
+};
+
+export default ActivosLotes;
