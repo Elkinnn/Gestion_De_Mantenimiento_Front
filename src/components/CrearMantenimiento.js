@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import Notification, { showInfoNotification } from './Notification';
 import api from '../api/api';
 
 const Container = styled.div`
@@ -135,30 +136,60 @@ const TableData = styled.td`
   border: 1px solid #ddd;
   font-size: 14px;
   color: #555;
+  text-align: center;
+`;
+
+const NoDataMessage = styled.td`
+  padding: 20px;
+  font-size: 16px;
+  color: #888;
+  text-align: center;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+`;
+
+const CenteredButtonWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
 `;
 
 const CrearMantenimiento = () => {
-    const [tipoMantenimiento, setTipoMantenimiento] = useState('Interno');
+    const [tipoMantenimiento, setTipoMantenimiento] = useState('');
     const [numeroMantenimiento, setNumeroMantenimiento] = useState('');
     const [seleccionado, setSeleccionado] = useState('');
     const [tecnicos, setTecnicos] = useState([]);
     const [proveedores, setProveedores] = useState([]);
     const [fechaInicio, setFechaInicio] = useState('');
     const [fechaFin, setFechaFin] = useState('');
-    const [activos, setActivos] = useState([]);
+    const [activos] = useState([]);
     const [rolUsuario, setRolUsuario] = useState('');
     const [nombreUsuario, setNombreUsuario] = useState('');
+
+    const [showProveedorTecnico, setShowProveedorTecnico] = useState(false); // Controlar visibilidad del proveedor/técnico
+    const [isFechaInicioEnabled, setIsFechaInicioEnabled] = useState(false); // Desbloquear Fecha Inicio
+    const [isFechaFinEnabled, setIsFechaFinEnabled] = useState(false); // Desbloquear Fecha Fin
+    const [isAgregarActivoEnabled, setIsAgregarActivoEnabled] = useState(false); // Desbloquear botón Agregar
+
+    const [showMessage, setShowMessage] = useState(false);
+
+    useEffect(() => {
+        if (rolUsuario === 'Admin') {
+            setShowMessage(true);
+        }
+    }, [rolUsuario]);
+
 
     useEffect(() => {
         const fetchUserRole = async () => {
             try {
-              const response = await api.get('/auth/user-info'); // Endpoint para obtener info del usuario actual
-              setRolUsuario(response.data.role); // Almacena el rol
-              setNombreUsuario(response.data.username); // Almacena el nombre del usuario
+                const response = await api.get('/auth/user-info'); // Endpoint para obtener info del usuario actual
+                setRolUsuario(response.data.role); // Almacena el rol
+                setNombreUsuario(response.data.username); // Almacena el nombre del usuario
             } catch (error) {
-              console.error('Error al obtener rol del usuario:', error);
+                console.error('Error al obtener rol del usuario:', error);
             }
-          };
+        };
 
         // Obtener número autoincremental de mantenimiento
         const fetchNumeroMantenimiento = async () => {
@@ -189,6 +220,53 @@ const CrearMantenimiento = () => {
         fetchTecnicosYProveedores();
     }, []);
 
+
+    // Dependencia vacía para que se ejecute solo al montar el componente.
+
+
+    const handleTipoMantenimientoChange = (tipo) => {
+        setTipoMantenimiento(tipo);
+        setShowMessage(false); // Ocultar mensaje al seleccionar tipo
+        setShowProveedorTecnico(true);
+        setSeleccionado('');
+        setIsFechaInicioEnabled(false);
+        setIsFechaFinEnabled(false);
+        setIsAgregarActivoEnabled(false);
+
+        if (rolUsuario === 'Admin') {
+            setFechaInicio('');
+            setFechaFin('');
+        }
+    };
+
+    const handleSeleccionadoChange = (value) => {
+        setSeleccionado(value);
+    
+        if (value === "") {
+            // Restablecer fechas si selecciona "Seleccione una opción"
+            setFechaInicio("");
+            setFechaFin("");
+            setIsFechaInicioEnabled(false); // Bloquear Fecha Inicio
+            setIsFechaFinEnabled(false);   // Bloquear Fecha Fin
+        } else {
+            setIsFechaInicioEnabled(true); // Desbloquear Fecha Inicio si hay algo seleccionado
+        }
+    };
+    
+
+    const handleFechaInicioChange = (value) => {
+        setFechaInicio(value);
+        setIsFechaFinEnabled(!!value); // Desbloquear Fecha Fin si hay Fecha Inicio
+    };
+
+    const handleFechaFinChange = (value) => {
+        setFechaFin(value);
+        setIsAgregarActivoEnabled(!!value); // Desbloquear botón Agregar si hay Fecha Fin
+    };
+
+
+
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         const data = {
@@ -197,7 +275,7 @@ const CrearMantenimiento = () => {
             seleccionado,
             fechaInicio,
             fechaFin,
-            estado: 'Activo', // Estado bloqueado
+            estado: 'Activo',
         };
 
         try {
@@ -210,15 +288,24 @@ const CrearMantenimiento = () => {
         }
     };
 
+
     return (
         <>
             <Navbar title="Nuevo Mantenimiento" />
+            <Notification />
             <Container>
                 <FormWrapper>
                     <Title>Crear Nuevo Mantenimiento</Title>
+                    {rolUsuario === 'Admin' && showMessage && (
+    <div style={{ color: 'red', textAlign: 'center', marginBottom: '20px' }}>
+        Por favor, seleccione un tipo de mantenimiento para continuar.
+    </div>
+)}
+
                     <form onSubmit={handleSubmit}>
                         <FormGrid>
-                            {rolUsuario !== 'Tecnico' && (
+                            {/* Solo visible para Admin */}
+                            {rolUsuario === 'Admin' && (
                                 <FullWidth>
                                     <InlineGroup>
                                         <Label>Tipo de Mantenimiento:</Label>
@@ -227,7 +314,7 @@ const CrearMantenimiento = () => {
                                                 type="radio"
                                                 value="Interno"
                                                 checked={tipoMantenimiento === 'Interno'}
-                                                onChange={() => setTipoMantenimiento('Interno')}
+                                                onChange={() => handleTipoMantenimientoChange('Interno')}
                                             />
                                             Interno
                                         </Label>
@@ -236,7 +323,7 @@ const CrearMantenimiento = () => {
                                                 type="radio"
                                                 value="Externo"
                                                 checked={tipoMantenimiento === 'Externo'}
-                                                onChange={() => setTipoMantenimiento('Externo')}
+                                                onChange={() => handleTipoMantenimientoChange('Externo')}
                                             />
                                             Externo
                                         </Label>
@@ -249,52 +336,65 @@ const CrearMantenimiento = () => {
                                 <Input type="text" value={numeroMantenimiento} readOnly />
                             </FormGroup>
 
-                            <FormGroup>
-    <Label>Técnico:</Label>
-    {rolUsuario === 'Tecnico' ? (
-        <Input type="text" value={nombreUsuario} readOnly />
-    ) : (
-        <Select
-            value={seleccionado}
-            onChange={(e) => setSeleccionado(e.target.value)}
-        >
-            <option value="">Seleccione una opción</option>
-            {(tipoMantenimiento === 'Interno' ? tecnicos : proveedores).map((item) => (
-                <option key={item.id} value={item.id}>
-                    {item.nombre || item.username}
-                </option>
-            ))}
-        </Select>
-    )}
-</FormGroup>
+                            {/* Campo Técnico siempre visible para Técnico */}
+                            {rolUsuario === 'Tecnico' && (
+                                <FormGroup>
+                                    <Label>Técnico:</Label>
+                                    <Input type="text" value={nombreUsuario} readOnly />
+                                </FormGroup>
+                            )}
 
-
+                            {/* Campos dinámicos para Admin */}
+                            {rolUsuario === 'Admin' && showProveedorTecnico && (
+                                <FormGroup>
+                                    <Label>{tipoMantenimiento === 'Interno' ? 'Técnico:' : 'Proveedor:'}</Label>
+                                    <Select
+                                        value={seleccionado}
+                                        onChange={(e) => handleSeleccionadoChange(e.target.value)}
+                                    >
+                                        <option value="">Seleccione una opción</option>
+                                        {(tipoMantenimiento === 'Interno' ? tecnicos : proveedores).map((item) => (
+                                            <option key={item.id} value={item.id}>
+                                                {item.nombre || item.username}
+                                            </option>
+                                        ))}
+                                    </Select>
+                                </FormGroup>
+                            )}
 
                             <FormGroup>
                                 <Label>Fecha Inicio:</Label>
                                 <Input
                                     type="date"
                                     value={fechaInicio}
-                                    onChange={(e) => setFechaInicio(e.target.value)}
-                                    required
+                                    onChange={(e) => handleFechaInicioChange(e.target.value)}
+                                    disabled={rolUsuario === 'Admin' && !isFechaInicioEnabled} // Siempre habilitada para Técnico
                                 />
                             </FormGroup>
-
                             <FormGroup>
                                 <Label>Fecha Fin:</Label>
                                 <Input
                                     type="date"
                                     value={fechaFin}
-                                    onChange={(e) => setFechaFin(e.target.value)}
+                                    onChange={(e) => handleFechaFinChange(e.target.value)}
+                                    disabled={(rolUsuario === 'Admin' && !isFechaFinEnabled) || (rolUsuario === 'Tecnico' && !fechaInicio)}
                                 />
                             </FormGroup>
 
-                            <FullWidth>
-                                <InlineGroup>
-                                    <Label>Agregar Activo:</Label>
-                                    <Button onClick={() => alert('Redirigiendo a agregar activo')}>Agregar</Button>
-                                </InlineGroup>
-                            </FullWidth>
+                            {/* Botón Agregar Activo solo para Admin */}
+                            {rolUsuario === 'Admin' && (
+                                <FullWidth>
+                                    <InlineGroup>
+                                        <Label>Agregar Activo:</Label>
+                                        <Button
+                                            disabled={!isAgregarActivoEnabled}
+                                            onClick={() => alert('Redirigiendo a agregar activo')}
+                                        >
+                                            Agregar
+                                        </Button>
+                                    </InlineGroup>
+                                </FullWidth>
+                            )}
                         </FormGrid>
 
                         <TableWrapper>
@@ -325,24 +425,29 @@ const CrearMantenimiento = () => {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="7" style={{ textAlign: 'center' }}>
-                                                No hay activos registrados.
-                                            </td>
+                                            <NoDataMessage colSpan="7">No hay activos registrados.</NoDataMessage>
                                         </tr>
                                     )}
                                 </tbody>
                             </Table>
                         </TableWrapper>
 
-                        <FullWidth>
-                            <Button type="submit">Guardar Mantenimiento</Button>
-                        </FullWidth>
+                        <CenteredButtonWrapper>
+                            <Button
+                                type="submit"
+                                disabled={rolUsuario !== 'Admin'}
+                            >
+                                Guardar Mantenimiento
+                            </Button>
+                        </CenteredButtonWrapper>
                     </form>
                 </FormWrapper>
             </Container>
             <Footer />
         </>
     );
+
+
 };
 
 export default CrearMantenimiento;
