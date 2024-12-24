@@ -138,193 +138,211 @@ const TableData = styled.td`
 `;
 
 const CrearMantenimiento = () => {
-  const [tipoMantenimiento, setTipoMantenimiento] = useState('Interno');
-  const [numeroMantenimiento, setNumeroMantenimiento] = useState('');
-  const [seleccionado, setSeleccionado] = useState('');
-  const [tecnicos, setTecnicos] = useState([]);
-  const [proveedores, setProveedores] = useState([]);
-  const [fechaInicio, setFechaInicio] = useState('');
-  const [fechaFin, setFechaFin] = useState('');
-  const [activos, setActivos] = useState([]);
+    const [tipoMantenimiento, setTipoMantenimiento] = useState('Interno');
+    const [numeroMantenimiento, setNumeroMantenimiento] = useState('');
+    const [seleccionado, setSeleccionado] = useState('');
+    const [tecnicos, setTecnicos] = useState([]);
+    const [proveedores, setProveedores] = useState([]);
+    const [fechaInicio, setFechaInicio] = useState('');
+    const [fechaFin, setFechaFin] = useState('');
+    const [activos, setActivos] = useState([]);
+    const [rolUsuario, setRolUsuario] = useState('');
+    const [nombreUsuario, setNombreUsuario] = useState('');
 
-  useEffect(() => {
-    // Obtener número autoincremental de mantenimiento
-    const fetchNumeroMantenimiento = async () => {
-      try {
-        const response = await api.get('/mantenimientos/ultimo-numero');
-        setNumeroMantenimiento(response.data.siguienteNumero);
-      } catch (error) {
-        console.error('Error al obtener número de mantenimiento:', error);
-      }
-    };
+    useEffect(() => {
+        const fetchUserRole = async () => {
+            try {
+              const response = await api.get('/auth/user-info'); // Endpoint para obtener info del usuario actual
+              setRolUsuario(response.data.role); // Almacena el rol
+              setNombreUsuario(response.data.username); // Almacena el nombre del usuario
+            } catch (error) {
+              console.error('Error al obtener rol del usuario:', error);
+            }
+          };
 
-    // Obtener técnicos y proveedores
-    const fetchTecnicosYProveedores = async () => {
+        // Obtener número autoincremental de mantenimiento
+        const fetchNumeroMantenimiento = async () => {
+            try {
+                const response = await api.get('/mantenimientos/ultimo-numero');
+                setNumeroMantenimiento(response.data.siguienteNumero);
+            } catch (error) {
+                console.error('Error al obtener número de mantenimiento:', error);
+            }
+        };
+
+        // Obtener técnicos y proveedores
+        const fetchTecnicosYProveedores = async () => {
+            try {
+                const [usuariosResponse, proveedoresResponse] = await Promise.all([
+                    api.get('/usuarios'), // Asegúrate de que esta ruta es correcta
+                    api.get('/proveedores'), // Asegúrate de que esta ruta es correcta
+                ]);
+                setTecnicos(usuariosResponse.data);
+                setProveedores(proveedoresResponse.data);
+            } catch (error) {
+                console.error('Error al cargar técnicos o proveedores:', error);
+            }
+        };
+
+        fetchUserRole();
+        fetchNumeroMantenimiento();
+        fetchTecnicosYProveedores();
+    }, []);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const data = {
+            tipoMantenimiento,
+            numeroMantenimiento,
+            seleccionado,
+            fechaInicio,
+            fechaFin,
+            estado: 'Activo', // Estado bloqueado
+        };
+
         try {
-          const [usuariosResponse, proveedoresResponse] = await Promise.all([
-            api.get('/usuarios'), // Asegúrate de que esta ruta es correcta
-            api.get('/proveedores'), // Asegúrate de que esta ruta es correcta
-          ]);
-          setTecnicos(usuariosResponse.data); // Cambia setUsuarios por setTecnicos si es necesario
-          setProveedores(proveedoresResponse.data);
+            const response = await api.post('/mantenimientos', data);
+            alert('Mantenimiento creado exitosamente');
+            console.log(response.data);
         } catch (error) {
-          console.error('Error al cargar técnicos o proveedores:', error);
+            console.error('Error al crear mantenimiento:', error);
+            alert('Error al crear el mantenimiento');
         }
-      };
-      
-      
-      
-
-    fetchNumeroMantenimiento();
-    fetchTecnicosYProveedores();
-  }, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const data = {
-      tipoMantenimiento,
-      numeroMantenimiento,
-      seleccionado,
-      fechaInicio,
-      fechaFin,
-      estado: 'Activo', // Estado bloqueado
     };
 
-    try {
-      const response = await api.post('/mantenimientos', data);
-      alert('Mantenimiento creado exitosamente');
-      console.log(response.data);
-    } catch (error) {
-      console.error('Error al crear mantenimiento:', error);
-      alert('Error al crear el mantenimiento');
-    }
-  };
+    return (
+        <>
+            <Navbar title="Nuevo Mantenimiento" />
+            <Container>
+                <FormWrapper>
+                    <Title>Crear Nuevo Mantenimiento</Title>
+                    <form onSubmit={handleSubmit}>
+                        <FormGrid>
+                            {rolUsuario !== 'Tecnico' && (
+                                <FullWidth>
+                                    <InlineGroup>
+                                        <Label>Tipo de Mantenimiento:</Label>
+                                        <Label>
+                                            <input
+                                                type="radio"
+                                                value="Interno"
+                                                checked={tipoMantenimiento === 'Interno'}
+                                                onChange={() => setTipoMantenimiento('Interno')}
+                                            />
+                                            Interno
+                                        </Label>
+                                        <Label>
+                                            <input
+                                                type="radio"
+                                                value="Externo"
+                                                checked={tipoMantenimiento === 'Externo'}
+                                                onChange={() => setTipoMantenimiento('Externo')}
+                                            />
+                                            Externo
+                                        </Label>
+                                    </InlineGroup>
+                                </FullWidth>
+                            )}
 
-  return (
-    <>
-      <Navbar title="Nuevo Mantenimiento" />
-      <Container>
-        <FormWrapper>
-          <Title>Crear Nuevo Mantenimiento</Title>
-          <form onSubmit={handleSubmit}>
-            <FormGrid>
-              <FullWidth>
-                <InlineGroup>
-                  <Label>Tipo de Mantenimiento:</Label>
-                  <Label>
-                    <input
-                      type="radio"
-                      value="Interno"
-                      checked={tipoMantenimiento === 'Interno'}
-                      onChange={() => setTipoMantenimiento('Interno')}
-                    />
-                    Interno
-                  </Label>
-                  <Label>
-                    <input
-                      type="radio"
-                      value="Externo"
-                      checked={tipoMantenimiento === 'Externo'}
-                      onChange={() => setTipoMantenimiento('Externo')}
-                    />
-                    Externo
-                  </Label>
-                </InlineGroup>
-              </FullWidth>
+                            <FormGroup>
+                                <Label>Número de Mantenimiento:</Label>
+                                <Input type="text" value={numeroMantenimiento} readOnly />
+                            </FormGroup>
 
-              <FormGroup>
-                <Label>Número de Mantenimiento:</Label>
-                <Input type="text" value={numeroMantenimiento} readOnly />
-              </FormGroup>
+                            <FormGroup>
+    <Label>Técnico:</Label>
+    {rolUsuario === 'Tecnico' ? (
+        <Input type="text" value={nombreUsuario} readOnly />
+    ) : (
+        <Select
+            value={seleccionado}
+            onChange={(e) => setSeleccionado(e.target.value)}
+        >
+            <option value="">Seleccione una opción</option>
+            {(tipoMantenimiento === 'Interno' ? tecnicos : proveedores).map((item) => (
+                <option key={item.id} value={item.id}>
+                    {item.nombre || item.username}
+                </option>
+            ))}
+        </Select>
+    )}
+</FormGroup>
 
-              <FormGroup>
-                <Label>{tipoMantenimiento === 'Interno' ? 'Técnico:' : 'Proveedor:'}</Label>
-                <Select
-                  value={seleccionado}
-                  onChange={(e) => setSeleccionado(e.target.value)}
-                >
-                  <option value="">Seleccione una opción</option>
-                  {(tipoMantenimiento === 'Interno' ? tecnicos : proveedores).map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.nombre || item.username}
-                    </option>
-                  ))}
-                </Select>
-              </FormGroup>
 
-              <FormGroup>
-                <Label>Fecha Inicio:</Label>
-                <Input
-                  type="date"
-                  value={fechaInicio}
-                  onChange={(e) => setFechaInicio(e.target.value)}
-                  required
-                />
-              </FormGroup>
 
-              <FormGroup>
-                <Label>Fecha Fin:</Label>
-                <Input
-                  type="date"
-                  value={fechaFin}
-                  onChange={(e) => setFechaFin(e.target.value)}
-                />
-              </FormGroup>
+                            <FormGroup>
+                                <Label>Fecha Inicio:</Label>
+                                <Input
+                                    type="date"
+                                    value={fechaInicio}
+                                    onChange={(e) => setFechaInicio(e.target.value)}
+                                    required
+                                />
+                            </FormGroup>
 
-              <FullWidth>
-                <InlineGroup>
-                  <Label>Agregar Activo:</Label>
-                  <Button onClick={() => alert('Redirigiendo a agregar activo')}>Agregar</Button>
-                </InlineGroup>
-              </FullWidth>
-            </FormGrid>
+                            <FormGroup>
+                                <Label>Fecha Fin:</Label>
+                                <Input
+                                    type="date"
+                                    value={fechaFin}
+                                    onChange={(e) => setFechaFin(e.target.value)}
+                                />
+                            </FormGroup>
 
-            <TableWrapper>
-              <Table>
-                <thead>
-                  <tr>
-                    <TableHeader>Proceso de Compra</TableHeader>
-                    <TableHeader>Código</TableHeader>
-                    <TableHeader>Serie</TableHeader>
-                    <TableHeader>Estado</TableHeader>
-                    <TableHeader>Ubicación</TableHeader>
-                    <TableHeader>Tipo</TableHeader>
-                    <TableHeader>Proveedor</TableHeader>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activos.length > 0 ? (
-                    activos.map((activo) => (
-                      <TableRow key={activo.id}>
-                        <TableData>{activo.proceso_compra}</TableData>
-                        <TableData>{activo.codigo}</TableData>
-                        <TableData>{activo.serie}</TableData>
-                        <TableData>{activo.estado}</TableData>
-                        <TableData>{activo.ubicacion}</TableData>
-                        <TableData>{activo.tipo}</TableData>
-                        <TableData>{activo.proveedor}</TableData>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="7" style={{ textAlign: 'center' }}>
-                        No hay activos registrados.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </Table>
-            </TableWrapper>
+                            <FullWidth>
+                                <InlineGroup>
+                                    <Label>Agregar Activo:</Label>
+                                    <Button onClick={() => alert('Redirigiendo a agregar activo')}>Agregar</Button>
+                                </InlineGroup>
+                            </FullWidth>
+                        </FormGrid>
 
-            <FullWidth>
-              <Button type="submit">Guardar Mantenimiento</Button>
-            </FullWidth>
-          </form>
-        </FormWrapper>
-      </Container>
-      <Footer />
-    </>
-  );
+                        <TableWrapper>
+                            <Table>
+                                <thead>
+                                    <tr>
+                                        <TableHeader>Proceso de Compra</TableHeader>
+                                        <TableHeader>Código</TableHeader>
+                                        <TableHeader>Serie</TableHeader>
+                                        <TableHeader>Estado</TableHeader>
+                                        <TableHeader>Ubicación</TableHeader>
+                                        <TableHeader>Tipo</TableHeader>
+                                        <TableHeader>Proveedor</TableHeader>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {activos.length > 0 ? (
+                                        activos.map((activo) => (
+                                            <TableRow key={activo.id}>
+                                                <TableData>{activo.proceso_compra}</TableData>
+                                                <TableData>{activo.codigo}</TableData>
+                                                <TableData>{activo.serie}</TableData>
+                                                <TableData>{activo.estado}</TableData>
+                                                <TableData>{activo.ubicacion}</TableData>
+                                                <TableData>{activo.tipo}</TableData>
+                                                <TableData>{activo.proveedor}</TableData>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="7" style={{ textAlign: 'center' }}>
+                                                No hay activos registrados.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </Table>
+                        </TableWrapper>
+
+                        <FullWidth>
+                            <Button type="submit">Guardar Mantenimiento</Button>
+                        </FullWidth>
+                    </form>
+                </FormWrapper>
+            </Container>
+            <Footer />
+        </>
+    );
 };
 
 export default CrearMantenimiento;
