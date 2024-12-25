@@ -216,9 +216,16 @@ const CrearMantenimiento = () => {
 
 
     const handleOpenEspecificacionesModal = (activo) => {
-        setActivoSeleccionado(activo); // Guarda el activo seleccionado
-        setEspecificacionesModalOpen(true); // Abre el modal
+        if (!activo.tipo_activo_id) {
+            console.error("El activo no tiene 'tipo_activo_id'.");
+            showInfoNotification('El activo seleccionado no tiene tipo_activo_id.');
+            return;
+        }
+        setActivoSeleccionado(activo);
+        setEspecificacionesModalOpen(true);
     };
+    
+    
 
 
 
@@ -281,13 +288,15 @@ const CrearMantenimiento = () => {
         const fetchActivos = async () => {
             try {
                 const response = await api.get('/activos'); // Cambia el endpoint si es necesario
-                setTodosActivos(response.data); // Almacena todos los activos
+                console.log(response.data); // Asegúrate de que los datos incluyen `tipo_activo_id`
+                setTodosActivos(response.data);
             } catch (error) {
                 console.error('Error al obtener activos:', error);
             }
         };
         fetchActivos();
     }, []);
+    
     // Dependencia vacía para que se ejecute solo al montar el componente.
 
 
@@ -335,22 +344,24 @@ const CrearMantenimiento = () => {
         const nuevoActivo = {
             procesoCompra: activo.procesoCompra || activo.proceso_compra || 'No especificado',
             codigo: activo.codigo || 'Sin código',
-            serie: activo.nombre || 'Sin nombre', // Mapeo correcto del nombre como serie
+            nombre: activo.nombre || 'Sin nombre',
             estado: activo.estado || 'Desconocido',
             ubicacion: activo.ubicacion || 'No especificado',
             tipo: activo.tipo || 'No especificado',
             proveedor: activo.proveedor || 'No especificado',
+            tipo_activo_id: activo.tipo_activo_id || null, // Verifica que esté incluido
         };
-
+    
         if (!activosSeleccionados.find((a) => a.codigo === nuevoActivo.codigo)) {
             setActivosSeleccionados([...activosSeleccionados, nuevoActivo]);
             showInfoNotification('Activo agregado correctamente.');
         } else {
             showInfoNotification('El activo ya está agregado.');
         }
-
+    
         handleCloseModal();
     };
+    
 
 
 
@@ -368,7 +379,7 @@ const CrearMantenimiento = () => {
 
         // Validar que la fecha de fin no sea menor que la de inicio
         if (fechaInicio && new Date(value) < new Date(fechaInicio)) {
-            showInfoNotification('La fecha de fin debe ser igual o posterior a la fecha de inicio.');
+            showInfoNotification('La fecha de fin no puede ser anterior a la fecha de inicio.');
             setFechaFin(''); // Reiniciar la fecha de fin
             setIsAgregarActivoEnabled(false); // Bloquear el botón
             return;
@@ -472,7 +483,7 @@ const CrearMantenimiento = () => {
                             </FormGroup>
 
                             {/* Botón Agregar Activo solo para Admin */}
-                            {rolUsuario === 'Admin' && (
+                            {(rolUsuario === 'Admin' || rolUsuario === 'Tecnico') && (
                                 <FullWidth>
                                     <InlineGroup>
                                         <Label>Agregar Activo:</Label>
@@ -508,7 +519,7 @@ const CrearMantenimiento = () => {
                                             <TableRow key={activo.codigo} $isEven={index % 2 === 0}>
                                                 <TableData>{activo.procesoCompra}</TableData>
                                                 <TableData>{activo.codigo}</TableData>
-                                                <TableData>{activo.serie}</TableData>
+                                                <TableData>{activo.nombre}</TableData>
                                                 <TableData>{activo.estado}</TableData>
                                                 <TableData>{activo.ubicacion}</TableData>
                                                 <TableData>{activo.tipo}</TableData>
