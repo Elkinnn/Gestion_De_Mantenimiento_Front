@@ -4,7 +4,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import Notification, { showInfoNotification } from './Notification';
 import Modal from './Modal';
-
+import EspecificacionesModal from './EspecificacionesModal';
 import api from '../api/api';
 
 const Container = styled.div`
@@ -94,6 +94,21 @@ const Button = styled.button`
     background-color: #0056b3;
   }
 `;
+
+const ActionButton = styled.button`
+  padding: 8px 15px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #218838;
+  }
+`;
+
 
 const TableWrapper = styled.div`
   margin-top: 30px;
@@ -185,6 +200,10 @@ const CrearMantenimiento = () => {
     const [activosSeleccionados, setActivosSeleccionados] = useState([]);
     const [todosActivos, setTodosActivos] = useState([]);
 
+    const [especificacionesModalOpen, setEspecificacionesModalOpen] = useState(false); // Estado para controlar el modal
+    const [activoSeleccionado, setActivoSeleccionado] = useState(null); // Activo seleccionado
+
+
     // Funciones para abrir y cerrar el modal
     const handleOpenModal = () => {
         setIsModalOpen(true); // Solo abre el modal
@@ -196,6 +215,10 @@ const CrearMantenimiento = () => {
     };
 
 
+    const handleOpenEspecificacionesModal = (activo) => {
+        setActivoSeleccionado(activo); // Guarda el activo seleccionado
+        setEspecificacionesModalOpen(true); // Abre el modal
+    };
 
 
 
@@ -247,6 +270,11 @@ const CrearMantenimiento = () => {
     }, []);
 
 
+    const handleAgregarEspecificaciones = (activo) => {
+        console.log('Agregar especificaciones para:', activo);
+        // Aquí podrías redirigir a otra página o abrir un modal para agregar especificaciones
+        showInfoNotification(`Especificaciones del activo ${activo.codigo} serán agregadas.`);
+    };
 
 
     useEffect(() => {
@@ -471,6 +499,7 @@ const CrearMantenimiento = () => {
                                         <TableHeader>Ubicación</TableHeader>
                                         <TableHeader>Tipo</TableHeader>
                                         <TableHeader>Proveedor</TableHeader>
+                                        <TableHeader>Acción</TableHeader>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -484,15 +513,24 @@ const CrearMantenimiento = () => {
                                                 <TableData>{activo.ubicacion}</TableData>
                                                 <TableData>{activo.tipo}</TableData>
                                                 <TableData>{activo.proveedor}</TableData>
+                                                <TableData>
+                                                    <ActionButton
+                                                        type="button"
+                                                        onClick={() => handleOpenEspecificacionesModal(activo)}
+                                                    >
+                                                        Agregar Especificaciones
+                                                    </ActionButton>
+                                                </TableData>
                                             </TableRow>
                                         ))
                                     ) : (
                                         <tr>
-                                            <NoDataMessage colSpan="7">No hay activos seleccionados.</NoDataMessage>
+                                            <NoDataMessage colSpan="8">No hay activos seleccionados.</NoDataMessage>
                                         </tr>
                                     )}
                                 </tbody>
                             </Table>
+
                         </TableWrapper>
 
                         <CenteredButtonWrapper>
@@ -521,6 +559,15 @@ const CrearMantenimiento = () => {
                             handleCloseModal(); // Cierra el modal después de agregar
                         }}
                         activos={todosActivos}
+                    />
+                )}
+
+
+                {especificacionesModalOpen && (
+                    <EspecificacionesModal
+                        isOpen={especificacionesModalOpen}
+                        onClose={() => setEspecificacionesModalOpen(false)} // Cierra el modal
+                        activo={activoSeleccionado} // Pasa el activo seleccionado como prop
                     />
                 )}
             </Container>
