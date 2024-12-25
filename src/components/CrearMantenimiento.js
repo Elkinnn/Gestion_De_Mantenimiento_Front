@@ -292,14 +292,14 @@ const CrearMantenimiento = () => {
             setFechaFin("");
             setIsFechaInicioEnabled(false);
             setIsFechaFinEnabled(false);
-            setIsAgregarActivoEnabled(false);
+            setIsAgregarActivoEnabled(false); // Bloquear el botón
         } else {
             // Si selecciona un nuevo técnico o proveedor, restablecer las fechas
             setFechaInicio("");
             setFechaFin("");
             setIsFechaInicioEnabled(true); // Habilitar Fecha Inicio
             setIsFechaFinEnabled(false);  // Bloquear Fecha Fin hasta que se seleccione Fecha Inicio
-            setIsAgregarActivoEnabled(false); // Bloquear botón Agregar
+            setIsAgregarActivoEnabled(false); // Bloquear el botón
         }
     };
 
@@ -342,31 +342,14 @@ const CrearMantenimiento = () => {
         if (fechaInicio && new Date(value) < new Date(fechaInicio)) {
             showInfoNotification('La fecha de fin debe ser igual o posterior a la fecha de inicio.');
             setFechaFin(''); // Reiniciar la fecha de fin
-            setIsAgregarActivoEnabled(false);
-            setIsGuardarEnabled(false); // Bloquear Guardar
+            setIsAgregarActivoEnabled(false); // Bloquear el botón
             return;
         }
 
+        // Habilitar el botón si la Fecha Fin es válida
         const isValidFechaFin = !!value && new Date(value) >= new Date(fechaInicio);
-        setIsAgregarActivoEnabled(isValidFechaFin); // Desbloquear "Agregar Activo" si la fecha de fin es válida
-        setIsGuardarEnabled(isValidFechaFin); // Desbloquear "Guardar Mantenimiento" si la fecha de fin es válida
+        setIsAgregarActivoEnabled(isValidFechaFin);
     };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     return (
         <>
@@ -465,11 +448,13 @@ const CrearMantenimiento = () => {
                                 <FullWidth>
                                     <InlineGroup>
                                         <Label>Agregar Activo:</Label>
-                                        <Button type="button" onClick={handleOpenModal}>Abrir Lista de Activos</Button>
-
-
-
-
+                                        <Button
+                                            type="button"
+                                            onClick={handleOpenModal}
+                                            disabled={!isAgregarActivoEnabled} // Botón bloqueado según el estado
+                                        >
+                                            Abrir Lista de Activos
+                                        </Button>
                                     </InlineGroup>
                                 </FullWidth>
                             )}
@@ -510,9 +495,6 @@ const CrearMantenimiento = () => {
                             </Table>
                         </TableWrapper>
 
-
-
-
                         <CenteredButtonWrapper>
                             <Button
                                 type="submit"
@@ -526,7 +508,6 @@ const CrearMantenimiento = () => {
                             >
                                 Guardar Mantenimiento
                             </Button>
-
                         </CenteredButtonWrapper>
                     </form>
                 </FormWrapper>
@@ -541,23 +522,11 @@ const CrearMantenimiento = () => {
                         }}
                         activos={todosActivos}
                     />
-
-
-
-
                 )}
-
-
-
-
-
-
             </Container>
             <Footer />
         </>
     );
-
-
 };
 
 export default CrearMantenimiento;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import Navbar from './Navbar';
 
 const ModalBackground = styled.div`
   position: fixed;
@@ -16,22 +17,45 @@ const ModalBackground = styled.div`
 
 const ModalContainer = styled.div`
   background-color: white;
-  padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   max-width: 800px;
   width: 90%;
+  position: relative;
+  overflow: hidden;
 `;
 
-const ModalHeader = styled.h2`
-  margin-top: 0;
+const ModalHeader = styled.div`
+  background-color: #007bff;
+  color: white;
+  padding: 15px;
   text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  position: relative;
+`;
+
+const CloseButton = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
+
+  &:hover {
+    color: #ddd;
+  }
 `;
 
 const TableWrapper = styled.div`
   margin-top: 20px;
-  overflow-x: auto;
-  max-height: 400px;
+  overflow-y: auto;
+  max-height: calc(50px * 7); /* Approx height for 7 rows including padding */
+  padding: 0 20px;
 `;
 
 const Table = styled.table`
@@ -47,6 +71,7 @@ const TableHeader = styled.th`
   font-size: 16px;
   text-transform: uppercase;
   border: 1px solid #ddd;
+  text-align: center;
 `;
 
 const TableRow = styled.tr`
@@ -67,7 +92,7 @@ const TableData = styled.td`
 const AddButtonWrapper = styled.div`
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  margin: 20px 0;
 `;
 
 const Button = styled.button`
@@ -101,13 +126,16 @@ const Modal = ({ isOpen, onClose, onAgregarActivo, activos }) => {
   return (
     <ModalBackground>
       <ModalContainer>
-        <ModalHeader>Lista de Activos</ModalHeader>
+        <ModalHeader>
+          Lista de Activos
+          <CloseButton onClick={onClose}>&times;</CloseButton>
+        </ModalHeader>
         <TableWrapper>
           <Table>
             <thead>
               <tr>
                 <TableHeader>Código</TableHeader>
-                <TableHeader>Nombre</TableHeader>
+                <TableHeader>Serie</TableHeader>
                 <TableHeader>Tipo</TableHeader>
               </tr>
             </thead>
@@ -145,12 +173,7 @@ const Modal = ({ isOpen, onClose, onAgregarActivo, activos }) => {
             }}
             disabled={!activoSeleccionado}
           >
-            Agregar Activo Seleccionado
-          </Button>
-        </AddButtonWrapper>
-        <AddButtonWrapper>
-          <Button onClick={onClose} style={{ backgroundColor: '#6c757d' }}>
-            Cancelar
+            Agregar Activo
           </Button>
         </AddButtonWrapper>
       </ModalContainer>
