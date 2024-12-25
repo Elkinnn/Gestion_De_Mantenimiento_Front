@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import Notification, { showInfoNotification } from './Notification';
+import Modal from './Modal';
+
 import api from '../api/api';
 
 const Container = styled.div`
@@ -154,6 +156,8 @@ const CenteredButtonWrapper = styled.div`
   margin-top: 30px;
 `;
 
+
+
 const CrearMantenimiento = () => {
     const [tipoMantenimiento, setTipoMantenimiento] = useState('');
     const [numeroMantenimiento, setNumeroMantenimiento] = useState('');
@@ -162,7 +166,7 @@ const CrearMantenimiento = () => {
     const [proveedores, setProveedores] = useState([]);
     const [fechaInicio, setFechaInicio] = useState('');
     const [fechaFin, setFechaFin] = useState('');
-    const [activos] = useState([]);
+    const [activos, setActivos] = useState([]);
     const [rolUsuario, setRolUsuario] = useState('');
     const [nombreUsuario, setNombreUsuario] = useState('');
 
@@ -172,6 +176,28 @@ const CrearMantenimiento = () => {
     const [isAgregarActivoEnabled, setIsAgregarActivoEnabled] = useState(false); // Desbloquear botón Agregar
 
     const [showMessage, setShowMessage] = useState(false);
+    const [isGuardarEnabled, setIsGuardarEnabled] = useState(false);
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalType, setModalType] = useState(''); // 'activos' o 'confirm'
+
+
+    const [activosSeleccionados, setActivosSeleccionados] = useState([]);
+    const [todosActivos, setTodosActivos] = useState([]);
+
+    // Funciones para abrir y cerrar el modal
+    const handleOpenModal = () => {
+        setIsModalOpen(true); // Solo abre el modal
+    };
+
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
+
+
+
+
 
     useEffect(() => {
         if (rolUsuario === 'Admin') {
@@ -221,8 +247,26 @@ const CrearMantenimiento = () => {
     }, []);
 
 
+
+
+    useEffect(() => {
+        const fetchActivos = async () => {
+            try {
+                const response = await api.get('/activos'); // Cambia el endpoint si es necesario
+                setTodosActivos(response.data); // Almacena todos los activos
+            } catch (error) {
+                console.error('Error al obtener activos:', error);
+            }
+        };
+        fetchActivos();
+    }, []);
     // Dependencia vacía para que se ejecute solo al montar el componente.
 
+
+    const handleConfirmModal = () => {
+        setIsModalOpen(false);
+        alert('Acción confirmada.'); // Aquí puedes realizar cualquier acción al confirmar
+    };
 
     const handleTipoMantenimientoChange = (tipo) => {
         setTipoMantenimiento(tipo);
@@ -241,18 +285,50 @@ const CrearMantenimiento = () => {
 
     const handleSeleccionadoChange = (value) => {
         setSeleccionado(value);
-    
+
         if (value === "") {
-            // Restablecer fechas si selecciona "Seleccione una opción"
+            // Si selecciona "Seleccione una opción", bloquear todo y restablecer
             setFechaInicio("");
             setFechaFin("");
-            setIsFechaInicioEnabled(false); // Bloquear Fecha Inicio
-            setIsFechaFinEnabled(false);   // Bloquear Fecha Fin
+            setIsFechaInicioEnabled(false);
+            setIsFechaFinEnabled(false);
+            setIsAgregarActivoEnabled(false);
         } else {
-            setIsFechaInicioEnabled(true); // Desbloquear Fecha Inicio si hay algo seleccionado
+            // Si selecciona un nuevo técnico o proveedor, restablecer las fechas
+            setFechaInicio("");
+            setFechaFin("");
+            setIsFechaInicioEnabled(true); // Habilitar Fecha Inicio
+            setIsFechaFinEnabled(false);  // Bloquear Fecha Fin hasta que se seleccione Fecha Inicio
+            setIsAgregarActivoEnabled(false); // Bloquear botón Agregar
         }
     };
-    
+
+    const handleAgregarActivo = (activo) => {
+        const nuevoActivo = {
+            procesoCompra: activo.procesoCompra || activo.proceso_compra || 'No especificado',
+            codigo: activo.codigo || 'Sin código',
+            serie: activo.nombre || 'Sin nombre', // Mapeo correcto del nombre como serie
+            estado: activo.estado || 'Desconocido',
+            ubicacion: activo.ubicacion || 'No especificado',
+            tipo: activo.tipo || 'No especificado',
+            proveedor: activo.proveedor || 'No especificado',
+        };
+
+        if (!activosSeleccionados.find((a) => a.codigo === nuevoActivo.codigo)) {
+            setActivosSeleccionados([...activosSeleccionados, nuevoActivo]);
+            showInfoNotification('Activo agregado correctamente.');
+        } else {
+            showInfoNotification('El activo ya está agregado.');
+        }
+
+        handleCloseModal();
+    };
+
+
+
+
+
+
 
     const handleFechaInicioChange = (value) => {
         setFechaInicio(value);
@@ -261,32 +337,35 @@ const CrearMantenimiento = () => {
 
     const handleFechaFinChange = (value) => {
         setFechaFin(value);
-        setIsAgregarActivoEnabled(!!value); // Desbloquear botón Agregar si hay Fecha Fin
-    };
 
-
-
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        const data = {
-            tipoMantenimiento,
-            numeroMantenimiento,
-            seleccionado,
-            fechaInicio,
-            fechaFin,
-            estado: 'Activo',
-        };
-
-        try {
-            const response = await api.post('/mantenimientos', data);
-            alert('Mantenimiento creado exitosamente');
-            console.log(response.data);
-        } catch (error) {
-            console.error('Error al crear mantenimiento:', error);
-            alert('Error al crear el mantenimiento');
+        // Validar que la fecha de fin no sea menor que la de inicio
+        if (fechaInicio && new Date(value) < new Date(fechaInicio)) {
+            showInfoNotification('La fecha de fin debe ser igual o posterior a la fecha de inicio.');
+            setFechaFin(''); // Reiniciar la fecha de fin
+            setIsAgregarActivoEnabled(false);
+            setIsGuardarEnabled(false); // Bloquear Guardar
+            return;
         }
+
+        const isValidFechaFin = !!value && new Date(value) >= new Date(fechaInicio);
+        setIsAgregarActivoEnabled(isValidFechaFin); // Desbloquear "Agregar Activo" si la fecha de fin es válida
+        setIsGuardarEnabled(isValidFechaFin); // Desbloquear "Guardar Mantenimiento" si la fecha de fin es válida
     };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     return (
@@ -297,12 +376,12 @@ const CrearMantenimiento = () => {
                 <FormWrapper>
                     <Title>Crear Nuevo Mantenimiento</Title>
                     {rolUsuario === 'Admin' && showMessage && (
-    <div style={{ color: 'red', textAlign: 'center', marginBottom: '20px' }}>
-        Por favor, seleccione un tipo de mantenimiento para continuar.
-    </div>
-)}
+                        <div style={{ color: 'red', textAlign: 'center', marginBottom: '20px' }}>
+                            Por favor, seleccione un tipo de mantenimiento para continuar.
+                        </div>
+                    )}
 
-                    <form onSubmit={handleSubmit}>
+                    <form>
                         <FormGrid>
                             {/* Solo visible para Admin */}
                             {rolUsuario === 'Admin' && (
@@ -386,12 +465,11 @@ const CrearMantenimiento = () => {
                                 <FullWidth>
                                     <InlineGroup>
                                         <Label>Agregar Activo:</Label>
-                                        <Button
-                                            disabled={!isAgregarActivoEnabled}
-                                            onClick={() => alert('Redirigiendo a agregar activo')}
-                                        >
-                                            Agregar
-                                        </Button>
+                                        <Button type="button" onClick={handleOpenModal}>Abrir Lista de Activos</Button>
+
+
+
+
                                     </InlineGroup>
                                 </FullWidth>
                             )}
@@ -411,10 +489,10 @@ const CrearMantenimiento = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {activos.length > 0 ? (
-                                        activos.map((activo) => (
-                                            <TableRow key={activo.id}>
-                                                <TableData>{activo.proceso_compra}</TableData>
+                                    {activosSeleccionados.length > 0 ? (
+                                        activosSeleccionados.map((activo, index) => (
+                                            <TableRow key={activo.codigo} $isEven={index % 2 === 0}>
+                                                <TableData>{activo.procesoCompra}</TableData>
                                                 <TableData>{activo.codigo}</TableData>
                                                 <TableData>{activo.serie}</TableData>
                                                 <TableData>{activo.estado}</TableData>
@@ -425,23 +503,55 @@ const CrearMantenimiento = () => {
                                         ))
                                     ) : (
                                         <tr>
-                                            <NoDataMessage colSpan="7">No hay activos registrados.</NoDataMessage>
+                                            <NoDataMessage colSpan="7">No hay activos seleccionados.</NoDataMessage>
                                         </tr>
                                     )}
                                 </tbody>
                             </Table>
                         </TableWrapper>
 
+
+
+
                         <CenteredButtonWrapper>
                             <Button
                                 type="submit"
-                                disabled={rolUsuario !== 'Admin'}
+                                disabled={
+                                    !isGuardarEnabled || // Si no se habilitó guardar
+                                    !numeroMantenimiento || // Si falta el número de mantenimiento
+                                    !fechaInicio || // Si falta la fecha de inicio
+                                    !fechaFin || // Si falta la fecha de fin
+                                    (tipoMantenimiento && !seleccionado) // Si no se seleccionó técnico/proveedor
+                                }
                             >
                                 Guardar Mantenimiento
                             </Button>
+
                         </CenteredButtonWrapper>
                     </form>
                 </FormWrapper>
+
+                {isModalOpen && (
+                    <Modal
+                        isOpen={isModalOpen}
+                        onClose={handleCloseModal}
+                        onAgregarActivo={(activo) => {
+                            handleAgregarActivo(activo);
+                            handleCloseModal(); // Cierra el modal después de agregar
+                        }}
+                        activos={todosActivos}
+                    />
+
+
+
+
+                )}
+
+
+
+
+
+
             </Container>
             <Footer />
         </>
