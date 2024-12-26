@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Navbar from './Navbar';
 import Footer from './Footer';
-import Notification, { showInfoNotification, showSuccessNotification } from './Notification';
+import Notification, { showInfoNotification, showSuccessNotification , showErrorNotification} from './Notification';
 import Modal from './Modal';
 import EspecificacionesModal from './EspecificacionesModal';
 import api from '../api/api';
@@ -413,64 +413,96 @@ const CrearMantenimiento = () => {
 
     const handleGuardarMantenimiento = async (e) => {
         e.preventDefault(); // Evita la recarga de la página
-
+    
         // Validar si hay activos seleccionados
         if (activosSeleccionados.length === 0) {
-            showInfoNotification('Debe seleccionar al menos un activo.');
+            showErrorNotification('Debe agregar al menos un activo para enviar el mantenimiento.');
             return;
         }
-
+    
         // Validar si todos los activos tienen especificaciones completas
         const activosSinEspecificaciones = activosSeleccionados.filter(
-            (activo) => !activo.tieneEspecificaciones // Supón que agregamos esta propiedad al guardar especificaciones
+            (activo) => !activo.tieneEspecificaciones // Activo que no tiene especificaciones guardadas
         );
-
+    
         if (activosSinEspecificaciones.length > 0) {
-            showInfoNotification(
-                'Todos los activos seleccionados deben tener especificaciones completas.'
-            );
+            showErrorNotification('Debe agregar especificaciones a todos los activos.');
             return;
         }
-
-        // Validar los campos obligatorios
+    
+        // Validar campos obligatorios
         if (!tipoMantenimiento || !seleccionado || !fechaInicio || !fechaFin) {
-            showInfoNotification('Debe completar todos los campos obligatorios.');
+            showErrorNotification('Debe completar todos los campos obligatorios.');
             return;
         }
-
+    
         try {
-            // Preparar datos para el envío
+            // Preparar datos del mantenimiento
             const mantenimientoData = {
-                tipo_mantenimiento: tipoMantenimiento,
                 numero_mantenimiento: numeroMantenimiento,
                 tecnico_proveedor_id: seleccionado,
                 fecha_inicio: fechaInicio,
                 fecha_fin: fechaFin,
-                activos: activosSeleccionados.map((activo) => ({
-                    id: activo.id,
-                    especificaciones: activo.especificaciones, // Lista de actividades y componentes
-                })),
+                estado: 'Activo',
             };
-
-            // Enviar datos al servidor
-            const response = await api.post('/mantenimientos', mantenimientoData);
-
-            if (response.status === 200) {
-                showInfoNotification('Mantenimiento registrado correctamente.');
-                // Reinicia los campos del formulario
-                setTipoMantenimiento('');
-                setNumeroMantenimiento('');
-                setSeleccionado('');
-                setFechaInicio('');
-                setFechaFin('');
-                setActivosSeleccionados([]);
+    
+            // Registrar el mantenimiento
+            const mantenimientoResponse = await api.post('/mantenimientos', mantenimientoData);
+            const mantenimientoId = mantenimientoResponse.data.id; // ID del mantenimiento registrado
+    
+            // Registrar activos asociados al mantenimiento
+            for (const activo of activosSeleccionados) {
+                const mantenimientoActivoResponse = await api.post('/mantenimientos_activos', {
+                    mantenimiento_id: mantenimientoId,
+                    activo_id: activo.id,
+                });
+    
+                const mantenimientoActivoId = mantenimientoActivoResponse.data.id; // ID del mantenimiento_activo registrado
+    
+                // Registrar actividades asociadas al activo
+                for (const actividad of especificacionesGuardadas[activo.id]?.actividades || []) {
+                    await api.post('/mantenimiento_actividades', {
+                        mantenimiento_activo_id: mantenimientoActivoId,
+                        actividad_id: actividad.id,
+                        descripcion: actividad.descripcion || 'Actividad registrada',
+                    });
+                }
+    
+                // Registrar componentes asociados al activo
+                for (const componente of especificacionesGuardadas[activo.id]?.componentes || []) {
+                    await api.post('/mantenimiento_componentes', {
+                        mantenimiento_activo_id: mantenimientoActivoId,
+                        componente_id: componente.id,
+                        cantidad: 1, // Por defecto 1, ajustar según sea necesario
+                    });
+                }
+    
+                // Registrar observaciones asociadas al activo
+                if (especificacionesGuardadas[activo.id]?.observaciones) {
+                    await api.post('/mantenimiento_observaciones', {
+                        mantenimiento_activo_id: mantenimientoActivoId,
+                        observacion: especificacionesGuardadas[activo.id].observaciones,
+                    });
+                }
             }
-
+    
+            // Mostrar notificación de éxito
+            showSuccessNotification('Mantenimiento registrado correctamente.');
+    
+            // Reiniciar el formulario
+            setTipoMantenimiento('');
+            setNumeroMantenimiento('');
+            setSeleccionado('');
+            setFechaInicio('');
+            setFechaFin('');
+            setActivosSeleccionados([]);
+            setEspecificacionesGuardadas({});
         } catch (error) {
-            console.error('Error al guardar mantenimiento:', error);
-            showInfoNotification('Error al registrar el mantenimiento.');
+            console.error('Error al registrar el mantenimiento:', error);
+            showErrorNotification('Error al registrar el mantenimiento. Intente nuevamente.');
         }
     };
+    
 
 
 
