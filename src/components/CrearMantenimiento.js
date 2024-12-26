@@ -403,7 +403,17 @@ const CrearMantenimiento = () => {
         handleCloseModal();
     };
 
-
+    const obtenerIdTecnicoPorNombre = async (nombre) => {
+        try {
+            const response = await api.get('/usuarios'); // Asegúrate de que esta ruta devuelve todos los usuarios
+            const tecnico = response.data.find((user) => user.username === nombre);
+            return tecnico ? tecnico.id : null;
+        } catch (error) {
+            console.error('Error al obtener el ID del técnico:', error);
+            showErrorNotification('Error al obtener el ID del técnico.');
+            return null;
+        }
+    };
 
     const handleGuardarMantenimiento = async (e) => {
         e.preventDefault();
@@ -424,10 +434,17 @@ const CrearMantenimiento = () => {
             return;
         }
     
-        // Validar campos obligatorios
-        if (!tipoMantenimiento || !seleccionado || !fechaInicio || !fechaFin) {
-            showErrorNotification('Debe completar todos los campos obligatorios.');
-            return;
+        // Validaciones específicas según el rol
+        if (rolUsuario === 'Admin') {
+            if (!tipoMantenimiento || !seleccionado || !fechaInicio || !fechaFin) {
+                showErrorNotification('Debe completar todos los campos obligatorios.');
+                return;
+            }
+        } else if (rolUsuario === 'Tecnico') {
+            if (!fechaInicio || !fechaFin) {
+                showErrorNotification('Debe completar las fechas de inicio y fin.');
+                return;
+            }
         }
     
         try {
@@ -435,7 +452,7 @@ const CrearMantenimiento = () => {
             const mantenimientoData = {
                 numero_mantenimiento: numeroMantenimiento,
                 proveedor_id: tipoMantenimiento === 'Externo' ? seleccionado : null,
-                tecnico_id: tipoMantenimiento === 'Interno' ? seleccionado : null,
+                tecnico_id: rolUsuario === 'Tecnico' ? (await obtenerIdTecnicoPorNombre(nombreUsuario)) : (tipoMantenimiento === 'Interno' ? seleccionado : null),
                 admin_id: null, // Siempre será null
                 fecha_inicio: fechaInicio,
                 fecha_fin: fechaFin,
@@ -469,6 +486,7 @@ const CrearMantenimiento = () => {
             showErrorNotification('Error al registrar el mantenimiento.');
         }
     };
+    
     
     
     
