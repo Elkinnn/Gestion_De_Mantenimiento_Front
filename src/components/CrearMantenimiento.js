@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Navbar from './Navbar';
 import Footer from './Footer';
-import Notification, { showInfoNotification } from './Notification';
+import Notification, { showInfoNotification, showSuccessNotification } from './Notification';
 import Modal from './Modal';
 import EspecificacionesModal from './EspecificacionesModal';
 import api from '../api/api';
@@ -163,6 +164,7 @@ const NoDataMessage = styled.td`
   text-align: center;
   background-color: #f9f9f9;
   border: 1px solid #ddd;
+  font-weight: bold;
 `;
 
 const CenteredButtonWrapper = styled.div`
@@ -203,6 +205,8 @@ const CrearMantenimiento = () => {
     const [especificacionesModalOpen, setEspecificacionesModalOpen] = useState(false); // Estado para controlar el modal
     const [activoSeleccionado, setActivoSeleccionado] = useState(null); // Activo seleccionado
 
+    const [especificacionesGuardadas, setEspecificacionesGuardadas] = useState({});
+
 
     // Funciones para abrir y cerrar el modal
     const handleOpenModal = () => {
@@ -214,18 +218,55 @@ const CrearMantenimiento = () => {
         setIsModalOpen(false);
     };
 
+    const onEspecificacionesGuardadas = (id, data) => {
+        if (especificacionesGuardadas[id]) {
+            // Si ya se han guardado especificaciones para este ID, no hacer nada.
+            return;
+        }
+    
+        setEspecificacionesGuardadas((prev) => ({
+            ...prev,
+            [id]: data,
+        }));
+    
+        setActivosSeleccionados((prev) =>
+            prev.map((activo) =>
+                activo.id === id ? { ...activo, tieneEspecificaciones: true } : activo
+            )
+        );
+    
+        // Mostrar la notificación de éxito solo una vez
+    };
+    
+      
+    
 
     const handleOpenEspecificacionesModal = (activo) => {
-        if (!activo.tipo_activo_id) {
-            console.error("El activo no tiene 'tipo_activo_id'.");
+        console.log('Activo antes de abrir el modal:', activo); // Depuración
+        if (!activo || !activo.tipo_activo_id) {
+            console.error("El activo no tiene 'tipo_activo_id'.", activo);
             showInfoNotification('El activo seleccionado no tiene tipo_activo_id.');
             return;
         }
-        setActivoSeleccionado(activo);
+
+        const especificaciones = especificacionesGuardadas[activo.id] || {
+            actividades: [],
+            componentes: [],
+            observaciones: '',
+        };
+
+        setActivoSeleccionado({ ...activo, especificaciones });
         setEspecificacionesModalOpen(true);
     };
-    
-    
+
+
+
+
+
+
+
+
+
 
 
 
@@ -296,7 +337,7 @@ const CrearMantenimiento = () => {
         };
         fetchActivos();
     }, []);
-    
+
     // Dependencia vacía para que se ejecute solo al montar el componente.
 
 
@@ -342,6 +383,7 @@ const CrearMantenimiento = () => {
 
     const handleAgregarActivo = (activo) => {
         const nuevoActivo = {
+            id: activo.id || null,
             procesoCompra: activo.procesoCompra || activo.proceso_compra || 'No especificado',
             codigo: activo.codigo || 'Sin código',
             nombre: activo.nombre || 'Sin nombre',
@@ -349,19 +391,89 @@ const CrearMantenimiento = () => {
             ubicacion: activo.ubicacion || 'No especificado',
             tipo: activo.tipo || 'No especificado',
             proveedor: activo.proveedor || 'No especificado',
-            tipo_activo_id: activo.tipo_activo_id || null, // Verifica que esté incluido
+            tipo_activo_id: activo.tipo_activo_id || null,
+            tieneEspecificaciones: false, // Inicializado como falso
         };
-    
+
+        // Validación: El activo debe tener un tipo_activo_id válido
+        if (!nuevoActivo.tipo_activo_id) {
+            console.error('El activo seleccionado no tiene un tipo válido:', nuevoActivo);
+            showInfoNotification('El activo seleccionado debe tener un tipo válido.');
+            return;
+        }
+
         if (!activosSeleccionados.find((a) => a.codigo === nuevoActivo.codigo)) {
             setActivosSeleccionados([...activosSeleccionados, nuevoActivo]);
             showInfoNotification('Activo agregado correctamente.');
         } else {
             showInfoNotification('El activo ya está agregado.');
         }
-    
+
         handleCloseModal();
     };
-    
+
+
+
+    const handleGuardarMantenimiento = async (e) => {
+        e.preventDefault(); // Evita la recarga de la página
+
+        // Validar si hay activos seleccionados
+        if (activosSeleccionados.length === 0) {
+            showInfoNotification('Debe seleccionar al menos un activo.');
+            return;
+        }
+
+        // Validar si todos los activos tienen especificaciones completas
+        const activosSinEspecificaciones = activosSeleccionados.filter(
+            (activo) => !activo.tieneEspecificaciones // Supón que agregamos esta propiedad al guardar especificaciones
+        );
+
+        if (activosSinEspecificaciones.length > 0) {
+            showInfoNotification(
+                'Todos los activos seleccionados deben tener especificaciones completas.'
+            );
+            return;
+        }
+
+        // Validar los campos obligatorios
+        if (!tipoMantenimiento || !seleccionado || !fechaInicio || !fechaFin) {
+            showInfoNotification('Debe completar todos los campos obligatorios.');
+            return;
+        }
+
+        try {
+            // Preparar datos para el envío
+            const mantenimientoData = {
+                tipo_mantenimiento: tipoMantenimiento,
+                numero_mantenimiento: numeroMantenimiento,
+                tecnico_proveedor_id: seleccionado,
+                fecha_inicio: fechaInicio,
+                fecha_fin: fechaFin,
+                activos: activosSeleccionados.map((activo) => ({
+                    id: activo.id,
+                    especificaciones: activo.especificaciones, // Lista de actividades y componentes
+                })),
+            };
+
+            // Enviar datos al servidor
+            const response = await api.post('/mantenimientos', mantenimientoData);
+
+            if (response.status === 200) {
+                showInfoNotification('Mantenimiento registrado correctamente.');
+                // Reinicia los campos del formulario
+                setTipoMantenimiento('');
+                setNumeroMantenimiento('');
+                setSeleccionado('');
+                setFechaInicio('');
+                setFechaFin('');
+                setActivosSeleccionados([]);
+            }
+
+        } catch (error) {
+            console.error('Error al guardar mantenimiento:', error);
+            showInfoNotification('Error al registrar el mantenimiento.');
+        }
+    };
 
 
 
@@ -482,6 +594,15 @@ const CrearMantenimiento = () => {
                                 />
                             </FormGroup>
 
+                            <FormGroup>
+                                <Label>Estado:</Label>
+                                <Input
+                                    type="text"
+                                    value="Activo"
+                                    readOnly
+                                />
+                            </FormGroup>
+
                             {/* Botón Agregar Activo solo para Admin */}
                             {(rolUsuario === 'Admin' || rolUsuario === 'Tecnico') && (
                                 <FullWidth>
@@ -514,32 +635,43 @@ const CrearMantenimiento = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {activosSeleccionados.length > 0 ? (
-                                        activosSeleccionados.map((activo, index) => (
-                                            <TableRow key={activo.codigo} $isEven={index % 2 === 0}>
-                                                <TableData>{activo.procesoCompra}</TableData>
-                                                <TableData>{activo.codigo}</TableData>
-                                                <TableData>{activo.nombre}</TableData>
-                                                <TableData>{activo.estado}</TableData>
-                                                <TableData>{activo.ubicacion}</TableData>
-                                                <TableData>{activo.tipo}</TableData>
-                                                <TableData>{activo.proveedor}</TableData>
-                                                <TableData>
+                                {activosSeleccionados.length === 0 ? (
+    <tr>
+      <NoDataMessage colSpan="8">No hay activos agregados al mantenimiento.</NoDataMessage>
+    </tr>
+  ) : (
+                                    activosSeleccionados.map((activo, index) => (
+                                        <TableRow key={activo.codigo} $isEven={index % 2 === 0}>
+                                            <TableData>{activo.procesoCompra}</TableData>
+                                            <TableData>{activo.codigo}</TableData>
+                                            <TableData>{activo.nombre}</TableData>
+                                            <TableData>{activo.estado}</TableData>
+                                            <TableData>{activo.ubicacion}</TableData>
+                                            <TableData>{activo.tipo}</TableData>
+                                            <TableData>{activo.proveedor}</TableData>
+                                            <TableData>
+                                                {!especificacionesGuardadas[activo.id] ? (
                                                     <ActionButton
                                                         type="button"
                                                         onClick={() => handleOpenEspecificacionesModal(activo)}
                                                     >
                                                         Agregar Especificaciones
                                                     </ActionButton>
-                                                </TableData>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <NoDataMessage colSpan="8">No hay activos seleccionados.</NoDataMessage>
-                                        </tr>
-                                    )}
+                                                ) : (
+                                                    <ActionButton
+                                                        type="button"
+                                                        onClick={() => handleOpenEspecificacionesModal(activo)}
+                                                    >
+                                                        Ver/Editar Especificaciones
+                                                    </ActionButton>
+                                                )}
+                                            </TableData>
+
+                                        </TableRow>
+                                    )))}
                                 </tbody>
+
+
                             </Table>
 
                         </TableWrapper>
@@ -548,15 +680,19 @@ const CrearMantenimiento = () => {
                             <Button
                                 type="submit"
                                 disabled={
-                                    !isGuardarEnabled || // Si no se habilitó guardar
-                                    !numeroMantenimiento || // Si falta el número de mantenimiento
-                                    !fechaInicio || // Si falta la fecha de inicio
-                                    !fechaFin || // Si falta la fecha de fin
-                                    (tipoMantenimiento && !seleccionado) // Si no se seleccionó técnico/proveedor
+                                    !isGuardarEnabled ||
+                                    !numeroMantenimiento ||
+                                    !fechaInicio ||
+                                    !fechaFin ||
+                                    (tipoMantenimiento && !seleccionado) ||
+                                    activosSeleccionados.length === 0 ||
+                                    activosSeleccionados.some((activo) => !activo.tieneEspecificaciones)
                                 }
                             >
                                 Guardar Mantenimiento
                             </Button>
+
+
                         </CenteredButtonWrapper>
                     </form>
                 </FormWrapper>
@@ -574,13 +710,18 @@ const CrearMantenimiento = () => {
                 )}
 
 
-                {especificacionesModalOpen && (
+                {especificacionesModalOpen && activoSeleccionado && (
                     <EspecificacionesModal
                         isOpen={especificacionesModalOpen}
-                        onClose={() => setEspecificacionesModalOpen(false)} // Cierra el modal
-                        activo={activoSeleccionado} // Pasa el activo seleccionado como prop
+                        onClose={() => setEspecificacionesModalOpen(false)}
+                        activo={activoSeleccionado}
+                        onEspecificacionesGuardadas={onEspecificacionesGuardadas} // Usamos la función centralizada
                     />
                 )}
+
+
+
+
             </Container>
             <Footer />
         </>
