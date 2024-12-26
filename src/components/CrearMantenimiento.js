@@ -5,6 +5,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import Notification, { showInfoNotification, showSuccessNotification, showErrorNotification } from './Notification';
 import Modal from './Modal';
+import BackButton from './BackButton';
 import EspecificacionesModal from './EspecificacionesModal';
 import api from '../api/api';
 
@@ -338,19 +339,25 @@ const CrearMantenimiento = () => {
     };
 
     const handleTipoMantenimientoChange = (tipo) => {
+        if (!tipo) {
+            setShowMessage(true); // Mostrar el mensaje de "Por favor, seleccione un tipo de mantenimiento para continuar"
+            return; // Evitar continuar si no hay tipo seleccionado
+        }
+
         setTipoMantenimiento(tipo);
-        setShowMessage(false); // Ocultar mensaje al seleccionar tipo
-        setShowProveedorTecnico(true);
-        setSeleccionado('');
-        setIsFechaInicioEnabled(false);
-        setIsFechaFinEnabled(false);
-        setIsAgregarActivoEnabled(false);
+        setShowMessage(false); // Ocultar mensaje de selección
+        setShowProveedorTecnico(true); // Mostrar el campo de selección (proveedor o técnico)
+        setSeleccionado(''); // Limpiar selección previa
+        setIsFechaInicioEnabled(false); // Bloquear Fecha Inicio
+        setIsFechaFinEnabled(false); // Bloquear Fecha Fin
+        setIsAgregarActivoEnabled(false); // Bloquear botón agregar activo
 
         if (rolUsuario === 'Admin') {
             setFechaInicio('');
             setFechaFin('');
         }
     };
+
 
     const handleSeleccionadoChange = (value) => {
         setSeleccionado(value);
@@ -417,26 +424,34 @@ const CrearMantenimiento = () => {
 
     const handleGuardarMantenimiento = async (e) => {
         e.preventDefault();
-    
+
         // Validar si hay activos seleccionados
         if (activosSeleccionados.length === 0) {
             showErrorNotification('Debe agregar al menos un activo para enviar el mantenimiento.');
             return;
         }
-    
+
         // Validar si todos los activos tienen especificaciones completas
         const activosSinEspecificaciones = activosSeleccionados.filter(
             (activo) => !activo.tieneEspecificaciones
         );
-    
+
         if (activosSinEspecificaciones.length > 0) {
             showErrorNotification('Debe agregar especificaciones a todos los activos.');
             return;
         }
-    
+
         // Validaciones específicas según el rol
         if (rolUsuario === 'Admin') {
-            if (!tipoMantenimiento || !seleccionado || !fechaInicio || !fechaFin) {
+            if (!tipoMantenimiento) {
+                showErrorNotification('Debe seleccionar un tipo de mantenimiento para continuar.');
+                return;
+            }
+            if (!seleccionado) {
+                showErrorNotification(`Debe seleccionar un ${tipoMantenimiento === 'Interno' ? 'técnico' : 'proveedor'} para continuar.`);
+                return;
+            }
+            if (!fechaInicio || !fechaFin) {
                 showErrorNotification('Debe completar todos los campos obligatorios.');
                 return;
             }
@@ -446,7 +461,7 @@ const CrearMantenimiento = () => {
                 return;
             }
         }
-    
+
         try {
             // Preparar datos del mantenimiento
             const mantenimientoData = {
@@ -466,31 +481,39 @@ const CrearMantenimiento = () => {
                     },
                 })),
             };
-    
+
             // Realizar la solicitud al backend
-            const response = await api.post('/mantenimientos', mantenimientoData);
-    
+            await api.post('/mantenimientos', mantenimientoData);
+
             // Mostrar notificación de éxito
             showSuccessNotification('Mantenimiento registrado correctamente.');
-    
-            // Reiniciar el formulario
+
+            // **Obtener el próximo número de mantenimiento**
+            const response = await api.get('/mantenimientos/ultimo-numero');
+            setNumeroMantenimiento(response.data.siguienteNumero);
+
+            // Reiniciar los demás valores del formulario
             setTipoMantenimiento('');
-            setNumeroMantenimiento('');
             setSeleccionado('');
             setFechaInicio('');
             setFechaFin('');
             setActivosSeleccionados([]);
             setEspecificacionesGuardadas({});
+            setShowProveedorTecnico(false); // Ocultar el campo de selección
+            setIsFechaInicioEnabled(false);
+            setIsFechaFinEnabled(false);
+            setIsAgregarActivoEnabled(false);
+            setShowMessage(true);
         } catch (error) {
             console.error('Error al registrar el mantenimiento:', error);
             showErrorNotification('Error al registrar el mantenimiento.');
         }
     };
-    
-    
-    
-    
-    
+
+
+
+
+
 
 
 
@@ -501,7 +524,7 @@ const CrearMantenimiento = () => {
 
     const handleFechaInicioChange = (value) => {
         setFechaInicio(value);
-    
+
         // Validar que la fecha de inicio no sea mayor que la fecha de fin
         if (fechaFin && new Date(value) > new Date(fechaFin)) {
             showInfoNotification('La fecha de inicio no puede ser mayor que la fecha de fin.');
@@ -510,12 +533,12 @@ const CrearMantenimiento = () => {
             setIsAgregarActivoEnabled(false); // Bloquear el botón
             return;
         }
-    
+
         // Habilitar el campo Fecha Fin si la Fecha Inicio es válida
         setIsFechaFinEnabled(!!value);
         setIsAgregarActivoEnabled(!!fechaFin && new Date(value) <= new Date(fechaFin));
     };
-    
+
 
     const handleFechaFinChange = (value) => {
         setFechaFin(value);
@@ -538,6 +561,18 @@ const CrearMantenimiento = () => {
             <Navbar title="Nuevo Mantenimiento" />
             <Notification />
             <Container>
+                <BackButton
+                    onClick={() => {
+                        // Lógica del botón para regresar
+                        console.log('Regresando a la página anterior...');
+                        window.history.back(); // Regresa a la página anterior
+                    }}
+                    style={{
+                        top: '20px', // Ajusta posición vertical
+                        right: '15px', // Ajusta posición horizontal
+                        fontSize: '24px', // Tamaño del icono
+                    }}
+                />
                 <FormWrapper>
                     <Title>Crear Nuevo Mantenimiento</Title>
                     {rolUsuario === 'Admin' && showMessage && (
@@ -710,14 +745,14 @@ const CrearMantenimiento = () => {
                         <CenteredButtonWrapper>
                             <Button
                                 type="submit"
-                                //</CenteredButtonWrapper>disabled={
-                                    //!numeroMantenimiento ||
-                                    //!fechaInicio ||
-                                   // !fechaFin ||
-                                   // (tipoMantenimiento && !seleccionado) ||
-                                   // activosSeleccionados.length === 0 ||
-                                    //activosSeleccionados.some((activo) => !activo.tieneEspecificaciones)
-                                //}
+                            //</CenteredButtonWrapper>disabled={
+                            //!numeroMantenimiento ||
+                            //!fechaInicio ||
+                            // !fechaFin ||
+                            // (tipoMantenimiento && !seleccionado) ||
+                            // activosSeleccionados.length === 0 ||
+                            //activosSeleccionados.some((activo) => !activo.tieneEspecificaciones)
+                            //}
                             >
                                 Guardar Mantenimiento
                             </Button>
