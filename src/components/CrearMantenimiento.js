@@ -218,46 +218,43 @@ const CrearMantenimiento = () => {
         setIsModalOpen(false);
     };
 
-    const onEspecificacionesGuardadas = (id, data) => {
-        if (especificacionesGuardadas[id]) {
-            // Si ya se han guardado especificaciones para este ID, no hacer nada.
-            return;
-        }
-    
+    const onEspecificacionesGuardadas = (id, nuevasEspecificaciones) => {
+        // Actualiza las especificaciones en el estado global
         setEspecificacionesGuardadas((prev) => ({
             ...prev,
-            [id]: data,
+            [id]: nuevasEspecificaciones,
         }));
     
+        // Actualiza el activo correspondiente en el estado de los activos seleccionados
         setActivosSeleccionados((prev) =>
             prev.map((activo) =>
-                activo.id === id ? { ...activo, tieneEspecificaciones: true } : activo
+                activo.id === id
+                    ? { ...activo, especificaciones: nuevasEspecificaciones, tieneEspecificaciones: true }
+                    : activo
             )
         );
-    
-        // Mostrar la notificación de éxito solo una vez
     };
+    
     
       
     
 
     const handleOpenEspecificacionesModal = (activo) => {
-        console.log('Activo antes de abrir el modal:', activo); // Depuración
         if (!activo || !activo.tipo_activo_id) {
-            console.error("El activo no tiene 'tipo_activo_id'.", activo);
             showInfoNotification('El activo seleccionado no tiene tipo_activo_id.');
             return;
         }
-
+    
         const especificaciones = especificacionesGuardadas[activo.id] || {
             actividades: [],
             componentes: [],
             observaciones: '',
         };
-
-        setActivoSeleccionado({ ...activo, especificaciones });
+    
+        setActivoSeleccionado({ ...activo, especificaciones }); // Sincroniza con las especificaciones más recientes
         setEspecificacionesModalOpen(true);
     };
+    
 
 
 

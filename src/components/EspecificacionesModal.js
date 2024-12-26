@@ -157,14 +157,13 @@ const EspecificacionesModal = ({ isOpen, onClose, activo, onEspecificacionesGuar
 
   useEffect(() => {
     if (activo && activo.tipo_activo_id) {
-      setActividadesSeleccionadas(activo.especificaciones?.actividades || []);
-      setComponentesSeleccionados(activo.especificaciones?.componentes || []);
-      setObservaciones(activo.especificaciones?.observaciones || '');
-      fetchActividadesYComponentes();
-    } else {
-      showErrorNotification('El activo no tiene un tipo válido. Verifica los datos.');
+        setActividadesSeleccionadas(activo.especificaciones?.actividades || []);
+        setComponentesSeleccionados(activo.especificaciones?.componentes || []);
+        setObservaciones(activo.especificaciones?.observaciones || '');
+        fetchActividadesYComponentes(); // Cargar actividades y componentes desde el API
     }
-  }, [activo]);
+}, [activo]);
+
 
   const cache = {};
   const fetchActividadesYComponentes = async () => {
@@ -228,6 +227,7 @@ const EspecificacionesModal = ({ isOpen, onClose, activo, onEspecificacionesGuar
     };
 
     setTimeout(() => {
+        // Actualiza las especificaciones del activo seleccionado y en el estado global
         onEspecificacionesGuardadas(activo.id, nuevasEspecificaciones);
 
         showSuccessNotification('Especificaciones guardadas con éxito.');
@@ -235,6 +235,7 @@ const EspecificacionesModal = ({ isOpen, onClose, activo, onEspecificacionesGuar
         onClose();
     }, 1500);
 };
+
 
   
 
