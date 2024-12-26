@@ -88,7 +88,13 @@ const Table = styled.table`
 const TableHead = styled.thead`
   background-color: #007bff;
   color: white;
+
+  th {
+    pointer-events: none; /* Esto evita cambios al pasar el cursor */
+    background-color: #007bff; /* Color fijo */
+  }
 `;
+
 
 const TableRow = styled.tr`
   &:nth-child(even) {
@@ -96,10 +102,11 @@ const TableRow = styled.tr`
   }
 
   &:hover {
-    background-color: #e9ecef;
+    background-color: #e9ecef; /* Esto aplica solo a las filas del cuerpo */
     cursor: pointer;
   }
 `;
+
 
 const TableHeader = styled.th`
   padding: 8px 10px;
@@ -192,18 +199,24 @@ const EspecificacionesModal = ({ isOpen, onClose, activo, onEspecificacionesGuar
   };
 
   const agregarActividad = (actividad) => {
-    if (!actividadesSeleccionadas.find((a) => a.id === actividad.id)) {
-      setActividadesSeleccionadas([...actividadesSeleccionadas, actividad]);
-      showInfoNotification(`Actividad "${actividad.nombre}" agregada.`);
+    if (actividadesSeleccionadas.find((a) => a.id === actividad.id)) {
+      showInfoNotification(`La actividad "${actividad.nombre}" ya está agregada.`);
+      return; // Salir si ya existe
     }
+    setActividadesSeleccionadas([...actividadesSeleccionadas, actividad]);
+    showInfoNotification(`Actividad "${actividad.nombre}" agregada.`);
   };
+  
 
   const agregarComponente = (componente) => {
-    if (!componentesSeleccionados.find((c) => c.id === componente.id)) {
-      setComponentesSeleccionados([...componentesSeleccionados, componente]);
-      showInfoNotification(`Componente "${componente.nombre}" agregado.`);
+    if (componentesSeleccionados.find((c) => c.id === componente.id)) {
+      showInfoNotification(`El componente "${componente.nombre}" ya está agregado.`);
+      return; // Salir si ya existe
     }
+    setComponentesSeleccionados([...componentesSeleccionados, componente]);
+    showInfoNotification(`Componente "${componente.nombre}" agregado.`);
   };
+  
 
   const handleGuardar = () => {
     if (!activo || !activo.id || !activo.tipo_activo_id) {

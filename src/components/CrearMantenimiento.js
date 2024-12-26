@@ -501,8 +501,21 @@ const CrearMantenimiento = () => {
 
     const handleFechaInicioChange = (value) => {
         setFechaInicio(value);
-        setIsFechaFinEnabled(!!value); // Desbloquear Fecha Fin si hay Fecha Inicio
+    
+        // Validar que la fecha de inicio no sea mayor que la fecha de fin
+        if (fechaFin && new Date(value) > new Date(fechaFin)) {
+            showInfoNotification('La fecha de inicio no puede ser mayor que la fecha de fin.');
+            setFechaInicio(''); // Reiniciar la fecha de inicio
+            setIsFechaFinEnabled(false); // Bloquear el campo Fecha Fin
+            setIsAgregarActivoEnabled(false); // Bloquear el botón
+            return;
+        }
+    
+        // Habilitar el campo Fecha Fin si la Fecha Inicio es válida
+        setIsFechaFinEnabled(!!value);
+        setIsAgregarActivoEnabled(!!fechaFin && new Date(value) <= new Date(fechaFin));
     };
+    
 
     const handleFechaFinChange = (value) => {
         setFechaFin(value);
