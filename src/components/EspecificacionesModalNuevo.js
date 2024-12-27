@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import api from '../api/api';
-import { showSuccessNotification, showErrorNotification } from './Notification';
+import { showSuccessNotification, showErrorNotification, showInfoNotification } from './Notification';
+
 
 const ModalContainer = styled.div`
   display: ${(props) => (props.$isOpen ? 'flex' : 'none')};
@@ -157,6 +158,7 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId }
     const [componentesUtilizados, setComponentesUtilizados] = useState([]);
     const [componentesDisponibles, setComponentesDisponibles] = useState([]);
     const [observaciones, setObservaciones] = useState('');
+    const [isSaving, setIsSaving] = useState(false); // Controla el estado de guardado
 
     useEffect(() => {
         if (activo && mantenimientoId) {
@@ -184,6 +186,84 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId }
         }
     };
 
+
+    const agregarActividad = (actividad) => {
+        // Verifica si la actividad ya está en actividadesRealizadas (registradas desde la base de datos)
+        if (actividadesRealizadas.some((a) => a.actividad_id === actividad.actividad_id)) {
+            showInfoNotification(`La actividad "${actividad.actividad_disponible}" ya está registrada en este activo.`);
+            return; // No permite duplicados de actividades registradas
+        }
+
+        // Verifica si la actividad ya fue agregada previamente
+        if (actividadesRealizadas.some((a) => a.nombre_actividad === actividad.actividad_disponible)) {
+            showInfoNotification(`La actividad "${actividad.actividad_disponible}" ya fue agregada.`);
+            return; // No permite duplicados al agregar nuevas
+        }
+
+        // Agrega la nueva actividad
+        setActividadesRealizadas((prevActividades) => [
+            ...prevActividades,
+            { actividad_id: actividad.actividad_id, nombre_actividad: actividad.actividad_disponible },
+        ]);
+
+        showInfoNotification(`Actividad "${actividad.actividad_disponible}" agregada.`);
+    };
+
+    const agregarComponente = (componente) => {
+        // Verifica si el componente ya está en componentesUtilizados (registrados desde la base de datos)
+        if (componentesUtilizados.some((c) => c.componente_id === componente.componente_id)) {
+            showInfoNotification(`El componente "${componente.componente_disponible}" ya está registrado en este activo.`);
+            return; // No permite duplicados de componentes registrados
+        }
+
+        // Verifica si el componente ya fue agregado previamente
+        if (componentesUtilizados.some((c) => c.componente_utilizado === componente.componente_disponible)) {
+            showInfoNotification(`El componente "${componente.componente_disponible}" ya fue agregado.`);
+            return; // No permite duplicados al agregar nuevos
+        }
+
+        // Agrega el nuevo componente
+        setComponentesUtilizados((prevComponentes) => [
+            ...prevComponentes,
+            { componente_id: componente.componente_id, componente_utilizado: componente.componente_disponible },
+        ]);
+
+        showInfoNotification(`Componente "${componente.componente_disponible}" agregado.`);
+    };
+
+    const handleGuardar = () => {
+        if (isSaving) return; // Evita múltiples clics mientras guarda
+
+        if (!actividadesRealizadas.length && !componentesUtilizados.length && !observaciones) {
+            showErrorNotification('Debe agregar al menos una actividad, un componente o una observación antes de guardar.');
+            return;
+        }
+
+        setIsSaving(true);
+
+        const especificaciones = {
+            actividades: actividadesRealizadas,
+            componentes: componentesUtilizados,
+            observaciones,
+        };
+
+        // Simulación de guardado (reemplazar con una llamada a la API si es necesario)
+        setTimeout(() => {
+            console.log('Especificaciones guardadas:', especificaciones); // Puedes enviar esto al backend si es necesario
+            showSuccessNotification('Especificaciones guardadas con éxito.');
+            setIsSaving(false);
+            onClose(); // Cierra el modal después de guardar
+        }, 1500);
+    };
+
+
+
+
+
+
+
+
+
     return (
         <ModalContainer $isOpen={isOpen}>
             <ModalContent>
@@ -209,7 +289,8 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId }
                                         <TableRow key={actividad.actividad_id}>
                                             <TableData>{actividad.actividad_disponible}</TableData>
                                             <TableData>
-                                                <Button onClick={() => console.log('Agregar', actividad)}>Agregar</Button>
+                                                <Button onClick={() => agregarActividad(actividad)}>Agregar</Button>
+
                                             </TableData>
                                         </TableRow>
                                     ))
@@ -267,7 +348,7 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId }
                                         <TableRow key={componente.componente_id}>
                                             <TableData>{componente.componente_disponible}</TableData>
                                             <TableData>
-                                                <Button onClick={() => console.log('Agregar', componente)}>Agregar</Button>
+                                                <Button onClick={() => agregarComponente(componente)}>Agregar</Button>
                                             </TableData>
                                         </TableRow>
                                     ))
@@ -309,26 +390,28 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId }
                 </Section>
 
                 {/* Observación */}
-<Section>
-    <SectionTitle>Observación</SectionTitle>
-    <ScrollableTableContainer>
-        <Table>
-            <tbody>
-                <TableRow>
-                    <TableData>
-                        <Input
-                            placeholder="Escriba aquí las observaciones..."
-                            value={observaciones}
-                            onChange={(e) => setObservaciones(e.target.value)}
-                        />
-                    </TableData>
-                </TableRow>
-            </tbody>
-        </Table>
-    </ScrollableTableContainer>
-</Section>
+                <Section>
+                    <SectionTitle>Observación</SectionTitle>
+                    <ScrollableTableContainer>
+                        <Table>
+                            <tbody>
+                                <TableRow>
+                                    <TableData>
+                                        <Input
+                                            placeholder="Escriba aquí las observaciones..."
+                                            value={observaciones}
+                                            onChange={(e) => setObservaciones(e.target.value)}
+                                        />
+                                    </TableData>
+                                </TableRow>
+                            </tbody>
+                        </Table>
+                    </ScrollableTableContainer>
+                </Section>
 
-
+                <Button onClick={handleGuardar} disabled={isSaving}>
+                    {isSaving ? 'Guardando...' : 'Guardar'}
+                </Button>
 
             </ModalContent>
         </ModalContainer>
