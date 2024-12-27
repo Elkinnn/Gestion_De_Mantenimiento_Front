@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import { useLocation } from 'react-router-dom';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
+import EspecificacionesModalNuevo from './EspecificacionesModalNuevo';
+import api from '../api/api';
 
 const Container = styled.div`
   display: flex;
@@ -14,48 +16,10 @@ const Container = styled.div`
   transition: margin-left 0.3s ease;
 `;
 
-const FormContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 20px;
-  background-color: white;
-  border-radius: 10px;
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-`;
-
 const Title = styled.h2`
   text-align: center;
   font-size: 26px;
   color: #343a40;
-`;
-
-const Row = styled.div`
-  display: flex;
-  gap: 20px;
-  align-items: center;
-`;
-
-const Label = styled.label`
-  flex: 1;
-  font-weight: bold;
-  color: #333;
-`;
-
-const Input = styled.input`
-  flex: 2;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: #f9f9f9;
-`;
-
-const Select = styled.select`
-  flex: 2;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: #f9f9f9;
 `;
 
 const Table = styled.table`
@@ -76,121 +40,128 @@ const TableData = styled.td`
   border: 1px solid #ddd;
 `;
 
+const Button = styled.button`
+  background-color: #007bff;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+`;
+
 const VerMantenimiento = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const location = useLocation();
-  const mantenimiento = location.state || {};
-  const role = localStorage.getItem('role'); // Obtener el rol del usuario
-  const userName = localStorage.getItem('userName');
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [mantenimiento, setMantenimiento] = useState({});
+    const [isLoading, setIsLoading] = useState(true);
+    const [activoSeleccionado, setActivoSeleccionado] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+    const location = useLocation();
+    const mantenimientoId = location.state?.id || mantenimiento?.mantenimiento_id;
 
-  useEffect(() => {
-    console.log('Datos recibidos en VerMantenimiento:', mantenimiento);
-  }, [mantenimiento]);
 
-  return (
-    <>
-      <Navbar title="Nuevo Mantenimiento" />
-      <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} currentMenu="mantenimientos" />
-      <Container $sidebarOpen={sidebarOpen}>
-        <Title>Mantenimiento</Title>
-        <FormContainer>
-          {/* Tipo de Mantenimiento */}
-          {role === 'Admin' && (
-            <Row>
-              <Label>Tipo de Mantenimiento:</Label>
-              <div>
-                <label>
-                  <input type="radio" name="tipo" value="Interno" defaultChecked /> Interno
-                </label>
-                <label>
-                  <input type="radio" name="tipo" value="Externo" style={{ marginLeft: '20px' }} /> Externo
-                </label>
-              </div>
-            </Row>
-          )}
+    useEffect(() => {
+        if (mantenimientoId) {
+            fetchMantenimientoData(mantenimientoId);
+        }
+    }, [mantenimientoId]);
 
-          {/* Campos dinámicos según tipo */}
-          {role === 'Admin' && (
-            <Row>
-              <Label>Proveedor:</Label>
-              <Input type="text" disabled={mantenimiento.tipo === 'Interno'} />
-              <Label>Técnico:</Label>
-              <Input type="text" disabled={mantenimiento.tipo === 'Externo'} />
-            </Row>
-          )}
+    const fetchMantenimientoData = async (id) => {
+        try {
+            const response = await api.get(`/mantenimientos/${id}`);
+            setMantenimiento(response.data);
+            setIsLoading(false);
+        } catch (error) {
+            console.error('Error al cargar los datos del mantenimiento:', error);
+            setIsLoading(false);
+        }
+    };
 
-          {role === 'Tecnico' && (
-            <Row>
-              <Label>Técnico:</Label>
-              <Input type="text" value={userName} disabled />
-            </Row>
-          )}
+    const toggleSidebar = () => {
+        setSidebarOpen(!sidebarOpen);
+    };
 
-          <Row>
-            <Label>Número de Mantenimiento:</Label>
-            <Input type="text" defaultValue={mantenimiento.numero_mantenimiento || ''} />
-          </Row>
+    const handleViewEspecificaciones = (activo) => {
+        if (!activo) {
+          console.warn('Intentaste ver especificaciones sin seleccionar un activo.');
+          return; // Salir si activo es null
+        }
+        setActivoSeleccionado(activo);
+        setIsModalOpen(true);
+      };
+      
+      
+      
 
-          <Row>
-            <Label>Fecha Inicio:</Label>
-            <Input type="date" defaultValue={mantenimiento.fecha_inicio?.split('T')[0] || ''} />
-            <Label>Fecha Fin:</Label>
-            <Input type="date" defaultValue={mantenimiento.fecha_fin?.split('T')[0] || ''} />
-          </Row>
+    if (isLoading) {
+        return <p>Cargando datos...</p>;
+    }
 
-          <Row>
-            <Label>Estado:</Label>
-            <Select defaultValue={mantenimiento.estado || ''}>
-              <option value="Activo">Activo</option>
-              <option value="Terminado">Terminado</option>
-            </Select>
-          </Row>
+    return (
+        <>
+            <Navbar title="Detalles del Mantenimiento" />
+            <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} currentMenu="mantenimientos" />
+            <Container $sidebarOpen={sidebarOpen}>
+                <Title>Detalles del Mantenimiento</Title>
+                <div>
+                    <p><strong>Número de Mantenimiento:</strong> {mantenimiento.numero_mantenimiento || 'No disponible'}</p>
+                    <p><strong>Proveedor:</strong> {mantenimiento.proveedor || 'No disponible'}</p>
+                    <p><strong>Técnico:</strong> {mantenimiento.tecnico || 'No disponible'}</p>
+                    <p><strong>Fecha Inicio:</strong> {mantenimiento.fecha_inicio?.split('T')[0] || 'No disponible'}</p>
+                    <p><strong>Fecha Fin:</strong> {mantenimiento.fecha_fin?.split('T')[0] || 'No disponible'}</p>
+                    <p><strong>Estado:</strong> {mantenimiento.estado || 'No disponible'}</p>
+                </div>
 
-          <Title>Activos en Mantenimiento:</Title>
-          <Table>
-            <thead>
-              <tr>
-                <TableHeader>Proceso de Compra</TableHeader>
-                <TableHeader>Código</TableHeader>
-                <TableHeader>Serie</TableHeader>
-                <TableHeader>Estado</TableHeader>
-                <TableHeader>Ubicación</TableHeader>
-                <TableHeader>Tipo</TableHeader>
-                <TableHeader>Proveedor</TableHeader>
-                <TableHeader>Acción</TableHeader>
-              </tr>
-            </thead>
-            <tbody>
-              {mantenimiento.activos && mantenimiento.activos.length > 0 ? (
-                mantenimiento.activos.map((activo, index) => (
-                  <tr key={index}>
-                    <TableData>{activo.proceso_compra}</TableData>
-                    <TableData>{activo.codigo}</TableData>
-                    <TableData>{activo.serie}</TableData>
-                    <TableData>{activo.estado}</TableData>
-                    <TableData>{activo.ubicacion}</TableData>
-                    <TableData>{activo.tipo}</TableData>
-                    <TableData>{activo.proveedor}</TableData>
-                    <TableData>
-                      <button>Agregar Especificaciones</button>
-                    </TableData>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <TableData colSpan="8">No hay activos registrados.</TableData>
-                </tr>
-              )}
-            </tbody>
-          </Table>
-        </FormContainer>
-      </Container>
-    </>
-  );
+                <Title>Activos en Mantenimiento</Title>
+                <Table>
+                    <thead>
+                        <tr>
+                            <TableHeader>Código</TableHeader>
+                            <TableHeader>Nombre</TableHeader>
+                            <TableHeader>Estado</TableHeader>
+                            <TableHeader>Ubicación</TableHeader>
+                            <TableHeader>Tipo</TableHeader>
+                            <TableHeader>Proveedor</TableHeader>
+                            <TableHeader>Acción</TableHeader>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {mantenimiento.activos && mantenimiento.activos.length > 0 ? (
+                            mantenimiento.activos.map((activo) => (
+                                <tr key={activo.activo_id}>
+                                    <TableData>{activo.codigo}</TableData>
+                                    <TableData>{activo.nombre}</TableData>
+                                    <TableData>{activo.estado}</TableData>
+                                    <TableData>{activo.ubicacion}</TableData>
+                                    <TableData>{activo.tipo}</TableData>
+                                    <TableData>{activo.proveedor}</TableData>
+                                    <TableData>
+                                        <Button onClick={() => handleViewEspecificaciones(activo)}>Ver Especificaciones</Button>
+                                    </TableData>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <TableData colSpan="7">No hay activos registrados.</TableData>
+                            </tr>
+                        )}
+                    </tbody>
+                </Table>
+            </Container>
+
+            <EspecificacionesModalNuevo
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                activo={activoSeleccionado}
+                mantenimientoId={mantenimiento?.mantenimiento_id} // Asegúrate de que este valor exista
+            />
+
+        </>
+    );
 };
 
 export default VerMantenimiento;

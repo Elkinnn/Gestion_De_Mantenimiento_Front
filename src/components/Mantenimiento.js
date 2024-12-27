@@ -406,22 +406,23 @@ const Mantenimientos = () => {
         </TableWrapper>
 
         <Button
-  onClick={() => {
-    if (!selectedMantenimiento) {
-      showInfoNotification('Debes seleccionar un mantenimiento para continuar.');
-    } else {
-      const mantenimientoSeleccionado = mantenimientos.find(
-        (mantenimiento) => mantenimiento.mantenimiento_id === selectedMantenimiento
-      );
+          onClick={() => {
+            if (!selectedMantenimiento) {
+              showInfoNotification('Debes seleccionar un mantenimiento para continuar.');
+            } else {
+              const mantenimientoSeleccionado = mantenimientos.find(
+                (mantenimiento) => mantenimiento.mantenimiento_id === selectedMantenimiento
+              );
 
-      console.log('Mantenimiento seleccionado:', mantenimientoSeleccionado); // Verifica los datos seleccionados
+              console.log('Mantenimiento seleccionado:', mantenimientoSeleccionado);
 
-      navigate('/vermantenimiento', { state: mantenimientoSeleccionado }); // Enviar datos como estado
-    }
-  }}
->
-  Ver Mantenimiento
-</Button>
+              navigate('/vermantenimiento', { state: { id: mantenimientoSeleccionado.mantenimiento_id } });
+            }
+          }}
+        >
+          Ver Mantenimiento
+        </Button>
+
 
 
 
