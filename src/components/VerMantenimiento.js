@@ -46,18 +46,25 @@ const FormGrid = styled.div`
 `;
 
 const GreenButton = styled.button`
-  padding: 8px 15px;
+  padding: 10px 15px; /* Ajusta el espacio interno */
   background-color: #28a745;
   color: white;
   border: none;
   border-radius: 5px;
   font-size: 14px;
   cursor: pointer;
+  text-align: center; /* Centra el texto */
+  line-height: 1.2; /* Ajusta el espacio entre líneas */
+  white-space: normal; /* Permite que el texto se divida en varias líneas */
+  word-break: break-word; /* Permite dividir las palabras largas */
+  display: block; /* Asegura el centrado vertical del contenido */
 
   &:hover {
-    background-color: #218838;
+    background-color: #218838; /* Cambia el color al pasar el cursor */
   }
 `;
+
+
 
 const FormGroup = styled.div`
   display: flex;
@@ -93,11 +100,14 @@ const Button = styled.button`
   border-radius: 5px;
   font-size: 16px;
   cursor: pointer;
+  text-align: center;
+  max-width: 200px; /* Limita el ancho del botón */
 
   &:hover {
     background-color: #0056b3;
   }
 `;
+
 
 const TableWrapper = styled.div`
   margin-top: 30px;
@@ -197,8 +207,8 @@ const VerMantenimiento = () => {
 
   const handleViewEspecificaciones = (activo) => {
     if (!activo) {
-        console.warn('Intentaste ver especificaciones sin seleccionar un activo.');
-        return;
+      console.warn('Intentaste ver especificaciones sin seleccionar un activo.');
+      return;
     }
 
     // Verifica si el activo es nuevo (sin activo_id)
@@ -206,21 +216,21 @@ const VerMantenimiento = () => {
 
     // Si es nuevo, inicializa especificaciones vacías
     if (esNuevoActivo) {
-        setActivoSeleccionado({
-            ...activo,
-            especificaciones: {
-                actividades_realizadas: [],
-                componentes_utilizados: [],
-                observaciones: '',
-            },
-        });
+      setActivoSeleccionado({
+        ...activo,
+        especificaciones: {
+          actividades_realizadas: [],
+          componentes_utilizados: [],
+          observaciones: '',
+        },
+      });
     } else {
-        // Si el activo ya existe, pasa directamente
-        setActivoSeleccionado(activo);
+      // Si el activo ya existe, pasa directamente
+      setActivoSeleccionado(activo);
     }
 
     setIsModalOpen(true);
-};
+  };
 
 
   if (isLoading) {
@@ -244,14 +254,14 @@ const VerMantenimiento = () => {
     const existe = activosTotales.some((a) => a.codigo === activo.codigo);
 
     if (existe) {
-        showInfoNotification('El activo ya está agregado.');
+      showInfoNotification('El activo ya está agregado.');
     } else {
-        setActivosSeleccionados([...activosSeleccionados, activo]);
-        showSuccessNotification('Activo agregado correctamente.');
+      setActivosSeleccionados([...activosSeleccionados, activo]);
+      showSuccessNotification('Activo agregado correctamente.');
     }
 
     handleCloseAgregarActivoModal();
-};
+  };
 
 
 
@@ -295,17 +305,28 @@ const VerMantenimiento = () => {
               </FormGroup>
 
               <FormGroup>
-                <Label>Estado:</Label>
+                <Label style={{ marginBottom: '10px' }}>Estado:</Label>
                 <Input type="text" value={mantenimiento.estado || ''} readOnly />
+
+                {/* Botón Agregar Activo debajo de Estado */}
+                <Label style={{ marginTop: '20px', marginBottom: '10px' }}>Agregar Activo:</Label>
+                <Button
+                  type="button"
+                  onClick={handleOpenAgregarActivoModal}
+                  style={{
+                    padding: '10px 15px',
+                    textAlign: 'center',
+                  }}
+                >
+                  Abrir Lista de Activos
+                </Button>
               </FormGroup>
+
+
             </FormGrid>
+
           </form>
-          <Button
-            onClick={handleOpenAgregarActivoModal}
-            style={{ marginBottom: '20px', display: 'block', marginLeft: 'auto', marginRight: 'auto' }}
-          >
-            Agregar Activo
-          </Button>
+
 
           {/* Tabla de activos */}
           <Title>Activos en Mantenimiento</Title>
