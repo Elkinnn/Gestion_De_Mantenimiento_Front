@@ -3,6 +3,9 @@ import styled from 'styled-components';
 import { useLocation } from 'react-router-dom';
 import Navbar from './Navbar';
 import EspecificacionesModalNuevo from './EspecificacionesModalNuevo';
+import { showSuccessNotification, showErrorNotification, showInfoNotification } from './Notification';
+
+import Modal from './Modal';
 import api from '../api/api';
 
 const Container = styled.div`
@@ -152,145 +155,221 @@ const NoDataMessage = styled.td`
 `;
 
 const VerMantenimiento = () => {
-    const [mantenimiento, setMantenimiento] = useState({});
-    const [isLoading, setIsLoading] = useState(true);
-    const [activoSeleccionado, setActivoSeleccionado] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+  const [mantenimiento, setMantenimiento] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [activoSeleccionado, setActivoSeleccionado] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const location = useLocation();
-    const mantenimientoId = location.state?.id || mantenimiento?.mantenimiento_id;
+  const location = useLocation();
+  const mantenimientoId = location.state?.id || mantenimiento?.mantenimiento_id;
+  const [isAgregarActivoModalOpen, setIsAgregarActivoModalOpen] = useState(false);
+  const [activos, setActivos] = useState([]); // Todos los activos disponibles
+  const [activosSeleccionados, setActivosSeleccionados] = useState([]);
+  useEffect(() => {
+    if (mantenimientoId) {
+      fetchMantenimientoData(mantenimientoId);
+    }
+  }, [mantenimientoId]);
 
-    useEffect(() => {
-        if (mantenimientoId) {
-            fetchMantenimientoData(mantenimientoId);
-        }
-    }, [mantenimientoId]);
-
-    const fetchMantenimientoData = async (id) => {
-        try {
-            const response = await api.get(`/mantenimientos/${id}`);
-            setMantenimiento(response.data);
-            setIsLoading(false);
-        } catch (error) {
-            console.error('Error al cargar los datos del mantenimiento:', error);
-            setIsLoading(false);
-        }
+  useEffect(() => {
+    const fetchActivos = async () => {
+      try {
+        const response = await api.get('/activos'); // Ajusta el endpoint si es necesario
+        setActivos(response.data);
+      } catch (error) {
+        console.error('Error al cargar activos:', error);
+      }
     };
 
-    const handleViewEspecificaciones = (activo) => {
-        if (!activo) {
-            console.warn('Intentaste ver especificaciones sin seleccionar un activo.');
-            return;
-        }
-        setActivoSeleccionado(activo);
-        setIsModalOpen(true);
-    };
+    fetchActivos();
+  }, []);
 
-    if (isLoading) {
-        return <p>Cargando datos...</p>;
+  const fetchMantenimientoData = async (id) => {
+    try {
+      const response = await api.get(`/mantenimientos/${id}`);
+      setMantenimiento(response.data);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error al cargar los datos del mantenimiento:', error);
+      setIsLoading(false);
+    }
+  };
+
+  const handleViewEspecificaciones = (activo) => {
+    if (!activo) {
+        console.warn('Intentaste ver especificaciones sin seleccionar un activo.');
+        return;
     }
 
-    return (
-        <>
-            <Navbar title="Detalles del Mantenimiento" />
-            <Container>
-                <FormWrapper>
-                    <Title>Detalles del Mantenimiento</Title>
-                    <form>
-                        <FormGrid>
-                            <FormGroup>
-                                <Label>Número de Mantenimiento:</Label>
-                                <Input type="text" value={mantenimiento.numero_mantenimiento || ''} readOnly />
-                            </FormGroup>
+    // Verifica si el activo es nuevo (sin activo_id)
+    const esNuevoActivo = !activo.activo_id;
 
-                            {/* Mostrar Proveedor solo si está definido */}
-                            {mantenimiento.proveedor && (
-                                <FormGroup>
-                                    <Label>Proveedor:</Label>
-                                    <Input type="text" value={mantenimiento.proveedor} readOnly />
-                                </FormGroup>
-                            )}
+    // Si es nuevo, inicializa especificaciones vacías
+    if (esNuevoActivo) {
+        setActivoSeleccionado({
+            ...activo,
+            especificaciones: {
+                actividades_realizadas: [],
+                componentes_utilizados: [],
+                observaciones: '',
+            },
+        });
+    } else {
+        // Si el activo ya existe, pasa directamente
+        setActivoSeleccionado(activo);
+    }
 
-                            {/* Mostrar Técnico solo si no hay proveedor */}
-                            {!mantenimiento.proveedor && mantenimiento.tecnico && (
-                                <FormGroup>
-                                    <Label>Técnico:</Label>
-                                    <Input type="text" value={mantenimiento.tecnico} readOnly />
-                                </FormGroup>
-                            )}
+    setIsModalOpen(true);
+};
 
-                            <FormGroup>
-                                <Label>Fecha Inicio:</Label>
-                                <Input type="date" value={mantenimiento.fecha_inicio?.split('T')[0] || ''} readOnly />
-                            </FormGroup>
 
-                            <FormGroup>
-                                <Label>Fecha Fin:</Label>
-                                <Input type="date" value={mantenimiento.fecha_fin?.split('T')[0] || ''} readOnly />
-                            </FormGroup>
+  if (isLoading) {
+    return <p>Cargando datos...</p>;
+  }
 
-                            <FormGroup>
-                                <Label>Estado:</Label>
-                                <Input type="text" value={mantenimiento.estado || ''} readOnly />
-                            </FormGroup>
-                        </FormGrid>
-                    </form>
 
-                    {/* Tabla de activos */}
-                    <Title>Activos en Mantenimiento</Title>
-                    <TableWrapper>
-                        <Table>
-                            <thead>
-                                <tr>
-                                    <TableHeader>Proceso de Compra</TableHeader>
-                                    <TableHeader>Código</TableHeader>
-                                    <TableHeader>Serie</TableHeader>
-                                    <TableHeader>Estado</TableHeader>
-                                    <TableHeader>Ubicación</TableHeader>
-                                    <TableHeader>Tipo</TableHeader>
-                                    <TableHeader>Proveedor</TableHeader>
-                                    <TableHeader>Acción</TableHeader>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {mantenimiento.activos && mantenimiento.activos.length > 0 ? (
-                                    mantenimiento.activos.map((activo, index) => (
-                                        <TableRow key={activo.activo_id} $isEven={index % 2 === 0}>
-                                            <TableData>{activo.proceso_compra || 'No disponible'}</TableData>
-                                            <TableData>{activo.codigo}</TableData>
-                                            <TableData>{activo.nombre}</TableData>
-                                            <TableData>{activo.estado}</TableData>
-                                            <TableData>{activo.ubicacion}</TableData>
-                                            <TableData>{activo.tipo}</TableData>
-                                            <TableData>{activo.proveedor}</TableData>
-                                            <TableData>
-                                                <GreenButton onClick={() => handleViewEspecificaciones(activo)}>
-                                                    Ver/Editar Especificaciones
-                                                </GreenButton>
-                                            </TableData>
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <NoDataMessage colSpan="8">No hay activos registrados.</NoDataMessage>
-                                    </TableRow>
-                                )}
-                            </tbody>
-                        </Table>
+  const handleOpenAgregarActivoModal = () => {
+    setIsAgregarActivoModalOpen(true);
+  };
 
-                    </TableWrapper>
-                </FormWrapper>
+  const handleCloseAgregarActivoModal = () => {
+    setIsAgregarActivoModalOpen(false);
+  };
 
-            </Container>
+  const handleAgregarActivo = (activo) => {
+    // Combina activos del mantenimiento original y los seleccionados
+    const activosTotales = [...(mantenimiento.activos || []), ...activosSeleccionados];
 
-            <EspecificacionesModalNuevo
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                activo={activoSeleccionado}
-                mantenimientoId={mantenimiento?.mantenimiento_id}
-            />
-        </>
-    );
+    // Verifica si el activo ya existe en la lista
+    const existe = activosTotales.some((a) => a.codigo === activo.codigo);
+
+    if (existe) {
+        showInfoNotification('El activo ya está agregado.');
+    } else {
+        setActivosSeleccionados([...activosSeleccionados, activo]);
+        showSuccessNotification('Activo agregado correctamente.');
+    }
+
+    handleCloseAgregarActivoModal();
+};
+
+
+
+  return (
+    <>
+      <Navbar title="Detalles del Mantenimiento" />
+      <Container>
+        <FormWrapper>
+          <Title>Detalles del Mantenimiento</Title>
+          <form>
+            <FormGrid>
+              <FormGroup>
+                <Label>Número de Mantenimiento:</Label>
+                <Input type="text" value={mantenimiento.numero_mantenimiento || ''} readOnly />
+              </FormGroup>
+
+              {/* Mostrar Proveedor solo si está definido */}
+              {mantenimiento.proveedor && (
+                <FormGroup>
+                  <Label>Proveedor:</Label>
+                  <Input type="text" value={mantenimiento.proveedor} readOnly />
+                </FormGroup>
+              )}
+
+              {/* Mostrar Técnico solo si no hay proveedor */}
+              {!mantenimiento.proveedor && mantenimiento.tecnico && (
+                <FormGroup>
+                  <Label>Técnico:</Label>
+                  <Input type="text" value={mantenimiento.tecnico} readOnly />
+                </FormGroup>
+              )}
+
+              <FormGroup>
+                <Label>Fecha Inicio:</Label>
+                <Input type="date" value={mantenimiento.fecha_inicio?.split('T')[0] || ''} readOnly />
+              </FormGroup>
+
+              <FormGroup>
+                <Label>Fecha Fin:</Label>
+                <Input type="date" value={mantenimiento.fecha_fin?.split('T')[0] || ''} readOnly />
+              </FormGroup>
+
+              <FormGroup>
+                <Label>Estado:</Label>
+                <Input type="text" value={mantenimiento.estado || ''} readOnly />
+              </FormGroup>
+            </FormGrid>
+          </form>
+          <Button
+            onClick={handleOpenAgregarActivoModal}
+            style={{ marginBottom: '20px', display: 'block', marginLeft: 'auto', marginRight: 'auto' }}
+          >
+            Agregar Activo
+          </Button>
+
+          {/* Tabla de activos */}
+          <Title>Activos en Mantenimiento</Title>
+          <TableWrapper>
+            <Table>
+              <thead>
+                <tr>
+                  <TableHeader>Proceso de Compra</TableHeader>
+                  <TableHeader>Código</TableHeader>
+                  <TableHeader>Serie</TableHeader>
+                  <TableHeader>Estado</TableHeader>
+                  <TableHeader>Ubicación</TableHeader>
+                  <TableHeader>Tipo</TableHeader>
+                  <TableHeader>Proveedor</TableHeader>
+                  <TableHeader>Acción</TableHeader>
+                </tr>
+              </thead>
+              <tbody>
+                {(mantenimiento.activos?.concat(activosSeleccionados) || []).length > 0 ? (
+                  mantenimiento.activos.concat(activosSeleccionados).map((activo, index) => (
+                    <TableRow key={activo.activo_id || activo.codigo} $isEven={index % 2 === 0}>
+                      <TableData>{activo.proceso_compra || 'No disponible'}</TableData>
+                      <TableData>{activo.codigo}</TableData>
+                      <TableData>{activo.nombre}</TableData>
+                      <TableData>{activo.estado}</TableData>
+                      <TableData>{activo.ubicacion}</TableData>
+                      <TableData>{activo.tipo}</TableData>
+                      <TableData>{activo.proveedor}</TableData>
+                      <TableData>
+                        <GreenButton onClick={() => handleViewEspecificaciones(activo)}>
+                          Ver/Editar Especificaciones
+                        </GreenButton>
+                      </TableData>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <NoDataMessage colSpan="8">No hay activos registrados.</NoDataMessage>
+                  </TableRow>
+                )}
+              </tbody>
+
+            </Table>
+
+          </TableWrapper>
+        </FormWrapper>
+
+      </Container>
+      {isAgregarActivoModalOpen && (
+        <Modal
+          isOpen={isAgregarActivoModalOpen}
+          onClose={handleCloseAgregarActivoModal}
+          onAgregarActivo={handleAgregarActivo}
+          activos={activos}
+        />
+      )}
+      <EspecificacionesModalNuevo
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        activo={activoSeleccionado}
+        mantenimientoId={mantenimiento?.mantenimiento_id}
+      />
+    </>
+  );
 };
 
 export default VerMantenimiento;

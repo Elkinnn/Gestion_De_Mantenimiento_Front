@@ -159,6 +159,7 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId }
     const [componentesDisponibles, setComponentesDisponibles] = useState([]);
     const [observaciones, setObservaciones] = useState('');
     const [isSaving, setIsSaving] = useState(false); // Controla el estado de guardado
+    const [especificacionesTemporales, setEspecificacionesTemporales] = useState({});
 
     useEffect(() => {
         if (activo && mantenimientoId) {
@@ -167,94 +168,204 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId }
     }, [activo, mantenimientoId]);
 
     const fetchEspecificaciones = async (mantenimientoId, activoId) => {
+        if (!activoId) {
+            // Si hay especificaciones temporales para este activo, cargarlas
+            if (especificacionesTemporales[activo.codigo]) {
+                const tempEspecificaciones = especificacionesTemporales[activo.codigo];
+                setActividadesRealizadas(tempEspecificaciones.actividades || []);
+                setComponentesUtilizados(tempEspecificaciones.componentes || []);
+                setObservaciones(tempEspecificaciones.observaciones || '');
+    
+                // Asegurarnos de cargar las actividades y componentes disponibles
+                try {
+                    const actividadesResponse = await api.get(`/especificaciones/actividades?tipo_activo_id=${activo.tipo_activo_id}`);
+                    const componentesResponse = await api.get(`/especificaciones/componentes?tipo_activo_id=${activo.tipo_activo_id}`);
+                    setActividadesDisponibles(actividadesResponse.data || []);
+                    setComponentesDisponibles(componentesResponse.data || []);
+                } catch (error) {
+                    console.error('Error al cargar actividades o componentes disponibles:', error);
+                    showErrorNotification('Error al cargar actividades o componentes disponibles.');
+                }
+    
+                console.log('Especificaciones temporales cargadas:', tempEspecificaciones);
+                return;
+            }
+    
+            console.log('El activo es nuevo. Solo se cargan actividades y componentes disponibles.');
+            try {
+                // Cargar actividades y componentes disponibles para el tipo de activo
+                const actividadesResponse = await api.get(`/especificaciones/actividades?tipo_activo_id=${activo.tipo_activo_id}`);
+                const componentesResponse = await api.get(`/especificaciones/componentes?tipo_activo_id=${activo.tipo_activo_id}`);
+                setActividadesDisponibles(actividadesResponse.data || []);
+                setComponentesDisponibles(componentesResponse.data || []);
+                setActividadesRealizadas([]);
+                setComponentesUtilizados([]);
+                setObservaciones('');
+            } catch (error) {
+                console.error('Error al cargar actividades o componentes:', error);
+                showErrorNotification('Error al cargar actividades o componentes disponibles.');
+            }
+            return;
+        }
+    
+        // Si el activo proviene de la BD
         try {
             const response = await api.get('/mantenimientos/actividades-del-activo', {
                 params: { mantenimiento_id: mantenimientoId, activo_id: activoId },
             });
-
             console.log('Respuesta del backend:', response.data);
-
             setActividadesRealizadas(response.data.actividades_realizadas || []);
             setActividadesDisponibles(response.data.actividades_disponibles || []);
             setComponentesUtilizados(response.data.componentes_utilizados || []);
             setComponentesDisponibles(response.data.componentes_disponibles || []);
             setObservaciones(response.data.observacion || '');
-
         } catch (error) {
             console.error('Error al obtener las especificaciones del activo:', error);
             showErrorNotification('Error al obtener las especificaciones del activo.');
         }
     };
+    
+    
+    
+    
+
+
 
 
     const agregarActividad = (actividad) => {
-        // Verifica si la actividad ya está en actividadesRealizadas (registradas desde la base de datos)
-        if (actividadesRealizadas.some((a) => a.actividad_id === actividad.actividad_id)) {
-            showInfoNotification(`La actividad "${actividad.actividad_disponible}" ya está registrada en este activo.`);
-            return; // No permite duplicados de actividades registradas
+        console.log("Estado actual - actividadesRealizadas:", actividadesRealizadas);
+        console.log("Estado actual - actividad agregada:", actividad);
+    
+        // Verificación para activos cargados desde BD
+        if (activo?.activo_id) {
+            if (
+                actividadesRealizadas.some(
+                    (a) =>
+                        a.actividad_id === actividad.actividad_id ||
+                        a.nombre_actividad === actividad.actividad_disponible
+                )
+            ) {
+                console.log("La actividad ya está registrada en un activo de la BD.");
+                showInfoNotification(`La actividad "${actividad.nombre || actividad.actividad_disponible}" ya está registrada en este activo.`);
+                return; // Evitar duplicados para activos de BD
+            }
+        } else {
+            // Verificación para nuevos activos
+            if (
+                actividadesRealizadas.some(
+                    (a) =>
+                        a.actividad_id === actividad.id ||
+                        a.nombre_actividad === actividad.actividad_disponible
+                )
+            ) {
+                console.log("La actividad ya fue agregada en un nuevo activo.");
+                showInfoNotification(`La actividad "${actividad.nombre || actividad.actividad_disponible}" ya fue agregada.`);
+                return; // Evitar duplicados para nuevos activos
+            }
         }
-
-        // Verifica si la actividad ya fue agregada previamente
-        if (actividadesRealizadas.some((a) => a.nombre_actividad === actividad.actividad_disponible)) {
-            showInfoNotification(`La actividad "${actividad.actividad_disponible}" ya fue agregada.`);
-            return; // No permite duplicados al agregar nuevas
-        }
-
-        // Agrega la nueva actividad
+    
+        // Agregar actividad
         setActividadesRealizadas((prevActividades) => [
             ...prevActividades,
-            { actividad_id: actividad.actividad_id, nombre_actividad: actividad.actividad_disponible },
+            {
+                actividad_id: actividad.actividad_id || actividad.id,
+                nombre_actividad: actividad.nombre || actividad.actividad_disponible,
+            },
         ]);
-
-        showInfoNotification(`Actividad "${actividad.actividad_disponible}" agregada.`);
+    
+        showSuccessNotification(`Actividad "${actividad.nombre || actividad.actividad_disponible}" agregada correctamente.`);
     };
-
+    
     const agregarComponente = (componente) => {
-        // Verifica si el componente ya está en componentesUtilizados (registrados desde la base de datos)
-        if (componentesUtilizados.some((c) => c.componente_id === componente.componente_id)) {
-            showInfoNotification(`El componente "${componente.componente_disponible}" ya está registrado en este activo.`);
-            return; // No permite duplicados de componentes registrados
+        console.log("Estado actual - componentesUtilizados:", componentesUtilizados);
+        console.log("Estado actual - componente agregado:", componente);
+    
+        // Verificación para activos cargados desde BD
+        if (activo?.activo_id) {
+            if (
+                componentesUtilizados.some(
+                    (c) =>
+                        c.componente_id === componente.componente_id ||
+                        c.componente_utilizado === componente.componente_disponible
+                )
+            ) {
+                console.log("El componente ya está registrado en un activo de la BD.");
+                showInfoNotification(`El componente "${componente.nombre || componente.componente_disponible}" ya está registrado en este activo.`);
+                return; // Evitar duplicados para activos de BD
+            }
+        } else {
+            // Verificación para nuevos activos
+            if (
+                componentesUtilizados.some(
+                    (c) =>
+                        c.componente_id === componente.id ||
+                        c.componente_utilizado === componente.componente_disponible
+                )
+            ) {
+                console.log("El componente ya fue agregado en un nuevo activo.");
+                showInfoNotification(`El componente "${componente.nombre || componente.componente_disponible}" ya fue agregado.`);
+                return; // Evitar duplicados para nuevos activos
+            }
         }
-
-        // Verifica si el componente ya fue agregado previamente
-        if (componentesUtilizados.some((c) => c.componente_utilizado === componente.componente_disponible)) {
-            showInfoNotification(`El componente "${componente.componente_disponible}" ya fue agregado.`);
-            return; // No permite duplicados al agregar nuevos
-        }
-
-        // Agrega el nuevo componente
+    
+        // Agregar componente
         setComponentesUtilizados((prevComponentes) => [
             ...prevComponentes,
-            { componente_id: componente.componente_id, componente_utilizado: componente.componente_disponible },
+            {
+                componente_id: componente.componente_id || componente.id,
+                componente_utilizado: componente.nombre || componente.componente_disponible,
+            },
         ]);
-
-        showInfoNotification(`Componente "${componente.componente_disponible}" agregado.`);
+    
+        showSuccessNotification(`Componente "${componente.nombre || componente.componente_disponible}" agregado correctamente.`);
     };
+    
+    
+    
+    
+    
+    
+    
+    
+
+
 
     const handleGuardar = () => {
         if (isSaving) return; // Evita múltiples clics mientras guarda
-
+    
         if (!actividadesRealizadas.length && !componentesUtilizados.length && !observaciones) {
             showErrorNotification('Debe agregar al menos una actividad, un componente o una observación antes de guardar.');
             return;
         }
-
+    
         setIsSaving(true);
-
+    
         const especificaciones = {
             actividades: actividadesRealizadas,
             componentes: componentesUtilizados,
             observaciones,
         };
-
-        // Simulación de guardado (reemplazar con una llamada a la API si es necesario)
+    
+        // Guardar especificaciones temporalmente si es un activo nuevo
+        if (!activo?.activo_id) {
+            setEspecificacionesTemporales((prevEspecificaciones) => ({
+                ...prevEspecificaciones,
+                [activo.codigo]: especificaciones,
+            }));
+            console.log('Especificaciones temporales guardadas:', especificaciones);
+        }
+    
         setTimeout(() => {
-            console.log('Especificaciones guardadas:', especificaciones); // Puedes enviar esto al backend si es necesario
+            console.log('Especificaciones guardadas:', especificaciones);
             showSuccessNotification('Especificaciones guardadas con éxito.');
             setIsSaving(false);
             onClose(); // Cierra el modal después de guardar
         }, 1500);
     };
+    
+    
+    
+    
 
 
 
@@ -273,36 +384,34 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId }
                 </Header>
 
                 {/* Actividades Disponibles */}
-                <Section>
-                    <SectionTitle>Actividades Disponibles</SectionTitle>
-                    <ScrollableTableContainer>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableHeader>Actividad</TableHeader>
-                                    <TableHeader>Acción</TableHeader>
-                                </TableRow>
-                            </TableHead>
-                            <tbody>
-                                {actividadesDisponibles.length > 0 ? (
-                                    actividadesDisponibles.map((actividad) => (
-                                        <TableRow key={actividad.actividad_id}>
-                                            <TableData>{actividad.actividad_disponible}</TableData>
-                                            <TableData>
-                                                <Button onClick={() => agregarActividad(actividad)}>Agregar</Button>
+                <SectionTitle>Actividades Disponibles</SectionTitle>
+                <ScrollableTableContainer>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableHeader>Actividad</TableHeader>
+                                <TableHeader>Acción</TableHeader>
+                            </TableRow>
+                        </TableHead>
+                        <tbody>
+                            {actividadesDisponibles.length > 0 ? (
+                                actividadesDisponibles.map((actividad, index) => (
+                                    <TableRow key={`actividad-disponible-${actividad.actividad_id}-${index}`}>
+                                        <TableData>{actividad.nombre || actividad.actividad_disponible || 'Nombre no disponible'}</TableData>
 
-                                            </TableData>
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableData colSpan="2">No hay actividades disponibles</TableData>
+                                        <TableData>
+                                            <Button onClick={() => agregarActividad(actividad)}>Agregar</Button>
+                                        </TableData>
                                     </TableRow>
-                                )}
-                            </tbody>
-                        </Table>
-                    </ScrollableTableContainer>
-                </Section>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableData colSpan="2">No hay actividades disponibles</TableData>
+                                </TableRow>
+                            )}
+                        </tbody>
+                    </Table>
+                </ScrollableTableContainer>
 
                 {/* Actividades Realizadas */}
                 <Section>
@@ -316,9 +425,10 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId }
                             </TableHead>
                             <tbody>
                                 {actividadesRealizadas.length > 0 ? (
-                                    actividadesRealizadas.map((actividad) => (
-                                        <TableRow key={actividad.actividad_id}>
-                                            <TableData>{actividad.nombre_actividad}</TableData>
+                                    actividadesRealizadas.map((actividad, index) => (
+                                        <TableRow key={`actividad-realizada-${actividad.actividad_id}-${index}`}>
+                                            <TableData>{actividad.nombre_actividad || actividad.nombre || 'Nombre no disponible'}</TableData>
+
                                         </TableRow>
                                     ))
                                 ) : (
@@ -344,9 +454,9 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId }
                             </TableHead>
                             <tbody>
                                 {componentesDisponibles.length > 0 ? (
-                                    componentesDisponibles.map((componente) => (
-                                        <TableRow key={componente.componente_id}>
-                                            <TableData>{componente.componente_disponible}</TableData>
+                                    componentesDisponibles.map((componente, index) => (
+                                        <TableRow key={`componente-disponible-${componente.componente_id || index}`}>
+                                            <TableData>{componente.nombre || componente.componente_disponible || 'Nombre no disponible'}</TableData>
                                             <TableData>
                                                 <Button onClick={() => agregarComponente(componente)}>Agregar</Button>
                                             </TableData>
@@ -358,6 +468,7 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId }
                                     </TableRow>
                                 )}
                             </tbody>
+
                         </Table>
                     </ScrollableTableContainer>
                 </Section>
@@ -374,8 +485,8 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId }
                             </TableHead>
                             <tbody>
                                 {componentesUtilizados.length > 0 ? (
-                                    componentesUtilizados.map((componente) => (
-                                        <TableRow key={componente.componente_id}>
+                                    componentesUtilizados.map((componente, index) => (
+                                        <TableRow key={`componente-utilizado-${componente.componente_id}-${index}`}>
                                             <TableData>{componente.componente_utilizado}</TableData>
                                         </TableRow>
                                     ))
