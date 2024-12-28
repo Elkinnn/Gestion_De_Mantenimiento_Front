@@ -175,6 +175,11 @@ const VerMantenimiento = () => {
   const [isAgregarActivoModalOpen, setIsAgregarActivoModalOpen] = useState(false);
   const [activos, setActivos] = useState([]); // Todos los activos disponibles
   const [activosSeleccionados, setActivosSeleccionados] = useState([]);
+
+  const [isFechaFinEnabled, setIsFechaFinEnabled] = useState(false);
+  const [fechaFinOriginal, setFechaFinOriginal] = useState('');
+
+
   useEffect(() => {
     if (mantenimientoId) {
       fetchMantenimientoData(mantenimientoId);
@@ -198,6 +203,7 @@ const VerMantenimiento = () => {
     try {
       const response = await api.get(`/mantenimientos/${id}`);
       setMantenimiento(response.data);
+      setFechaFinOriginal(response.data.fecha_fin);
       setIsLoading(false);
     } catch (error) {
       console.error('Error al cargar los datos del mantenimiento:', error);
@@ -258,10 +264,50 @@ const VerMantenimiento = () => {
     } else {
       setActivosSeleccionados([...activosSeleccionados, activo]);
       showSuccessNotification('Activo agregado correctamente.');
+
+      setIsFechaFinEnabled(true);
     }
 
     handleCloseAgregarActivoModal();
   };
+
+  const handleFechaFinChange = (value) => {
+    const nuevaFechaFin = new Date(value); // Fecha seleccionada por el usuario
+    const fechaOriginal = new Date(fechaFinOriginal); // Fecha original registrada
+  
+    // Permitir regresar a la fecha original
+    if (nuevaFechaFin.getTime() === fechaOriginal.getTime()) {
+      setMantenimiento((prev) => ({
+        ...prev,
+        fecha_fin: value,
+      }));
+      return;
+    }
+  
+    // Validar que la nueva fecha no sea inferior a la fecha original
+    if (nuevaFechaFin < fechaOriginal) {
+      showErrorNotification(
+        'La fecha de fin no puede ser anterior a la fecha original registrada.'
+      );
+      return;
+    }
+  
+    // Actualizar la fecha de fin para fechas válidas
+    setMantenimiento((prev) => ({
+      ...prev,
+      fecha_fin: value,
+    }));
+  };
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
 
 
@@ -301,8 +347,14 @@ const VerMantenimiento = () => {
 
               <FormGroup>
                 <Label>Fecha Fin:</Label>
-                <Input type="date" value={mantenimiento.fecha_fin?.split('T')[0] || ''} readOnly />
+                <Input
+                  type="date"
+                  value={mantenimiento.fecha_fin?.split('T')[0] || ''}
+                  onChange={(e) => handleFechaFinChange(e.target.value)}
+                  disabled={!isFechaFinEnabled}
+                />
               </FormGroup>
+
 
               <FormGroup>
                 <Label style={{ marginBottom: '10px' }}>Estado:</Label>
