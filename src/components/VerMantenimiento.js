@@ -302,9 +302,89 @@ const VerMantenimiento = () => {
   
   
   
+  const handleGuardarMantenimiento = async () => {
+    try {
+        // Validación: Asegurarse de que los datos requeridos estén completos
+        if (!mantenimiento.estado || !mantenimiento.fecha_fin) {
+            showErrorNotification('El estado y la fecha de fin son obligatorios.');
+            return;
+        }
+
+        // Consolidar los activos seleccionados
+        const activosFinales = (mantenimiento.activos || []).concat(activosSeleccionados);
+
+        if (!activosFinales.length) {
+          showErrorNotification('Debe agregar al menos un activo.');
+          return;
+      }
+        // Filtrar los activos que tienen un activo_id válido
+        const activosValidos = activosFinales.filter((activo) => {
+            if (!activo.codigo || !activo.nombre) {
+                console.error('Datos incompletos en el activo:', activo);
+                showErrorNotification('Uno o más activos tienen información incompleta.');
+                return false;
+            }
+            return activo.activo_id;
+        });
+
+        // Verificar si hay activos no válidos
+        if (activosFinales.length !== activosValidos.length) {
+            console.error('Algunos activos no tienen un activo_id válido:', activosFinales.filter((activo) => !activo.activo_id));
+            showErrorNotification('Uno o más activos no tienen un ID válido.');
+            return;
+        }
+        // Preparar el payload para el backend
+        const payload = {
+            estado: mantenimiento.estado,
+            fecha_fin: mantenimiento.fecha_fin,
+            activos: activosValidos.map((activo) => ({
+                activo_id: activo.activo_id,
+                codigo: activo.codigo,
+                nombre: activo.nombre,
+                especificaciones: activo.especificaciones || {
+                    actividades: activo.especificaciones?.actividades || [],
+                    componentes: activo.especificaciones?.componentes || [],
+                    observaciones: activo.especificaciones?.observaciones || '',
+                },
+            })),
+        };
+
+        console.log('Payload que se envía al backend:', JSON.stringify(payload, null, 2));
+
+        // Llamada al backend
+        const response = await api.put(`/mantenimientos/${mantenimiento.mantenimiento_id}`, payload);
+
+        if (response.status === 200) {
+            showSuccessNotification('Mantenimiento guardado correctamente.');
+            setMantenimiento(response.data); // Actualizar el estado con los datos más recientes
+        } else {
+            showErrorNotification('Hubo un problema al guardar el mantenimiento.');
+        }
+    } catch (error) {
+        console.error('Error al guardar el mantenimiento:', error);
+        showErrorNotification('Error al guardar el mantenimiento. Por favor, inténtalo de nuevo.');
+    }
+};
+
+
   
   
-  
+  const handleGuardarEspecificaciones = (activo, especificaciones) => {
+    setMantenimiento((prev) => ({
+        ...prev,
+        activos: prev.activos.map((a) =>
+            a.codigo === activo.codigo ? { ...a, especificaciones } : a
+        ),
+    }));
+
+    setActivosSeleccionados((prev) =>
+        prev.map((a) =>
+            a.codigo === activo.codigo ? { ...a, especificaciones } : a
+        )
+    );
+};
+
+
   
   
   
@@ -424,6 +504,13 @@ const VerMantenimiento = () => {
             </Table>
 
           </TableWrapper>
+          <Button
+  type="button"
+  onClick={handleGuardarMantenimiento}
+  style={{ marginTop: '20px' }}
+>
+  Guardar Mantenimiento
+</Button>
         </FormWrapper>
 
       </Container>
@@ -440,6 +527,7 @@ const VerMantenimiento = () => {
         onClose={() => setIsModalOpen(false)}
         activo={activoSeleccionado}
         mantenimientoId={mantenimiento?.mantenimiento_id}
+        onGuardarEspecificaciones={handleGuardarEspecificaciones}
       />
     </>
   );

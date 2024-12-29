@@ -152,7 +152,7 @@ const Input = styled.textarea`
   width: 96.5%; /* Ajusta el tamaño horizontal */
 `;
 
-const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId }) => {
+const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId, onGuardarEspecificaciones  }) => {
     const [actividadesRealizadas, setActividadesRealizadas] = useState([]);
     const [actividadesDisponibles, setActividadesDisponibles] = useState([]);
     const [componentesUtilizados, setComponentesUtilizados] = useState([]);
@@ -168,62 +168,99 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId }
     }, [activo, mantenimientoId]);
 
     const fetchEspecificaciones = async (mantenimientoId, activoId) => {
-        if (!activoId) {
-            // Si hay especificaciones temporales para este activo, cargarlas
-            if (especificacionesTemporales[activo.codigo]) {
-                const tempEspecificaciones = especificacionesTemporales[activo.codigo];
-                setActividadesRealizadas(tempEspecificaciones.actividades || []);
-                setComponentesUtilizados(tempEspecificaciones.componentes || []);
-                setObservaciones(tempEspecificaciones.observaciones || '');
-    
-                // Asegurarnos de cargar las actividades y componentes disponibles
-                try {
-                    const actividadesResponse = await api.get(`/especificaciones/actividades?tipo_activo_id=${activo.tipo_activo_id}`);
-                    const componentesResponse = await api.get(`/especificaciones/componentes?tipo_activo_id=${activo.tipo_activo_id}`);
-                    setActividadesDisponibles(actividadesResponse.data || []);
-                    setComponentesDisponibles(componentesResponse.data || []);
-                } catch (error) {
-                    console.error('Error al cargar actividades o componentes disponibles:', error);
-                    showErrorNotification('Error al cargar actividades o componentes disponibles.');
-                }
-    
-                console.log('Especificaciones temporales cargadas:', tempEspecificaciones);
-                return;
-            }
-    
-            console.log('El activo es nuevo. Solo se cargan actividades y componentes disponibles.');
-            try {
-                // Cargar actividades y componentes disponibles para el tipo de activo
-                const actividadesResponse = await api.get(`/especificaciones/actividades?tipo_activo_id=${activo.tipo_activo_id}`);
-                const componentesResponse = await api.get(`/especificaciones/componentes?tipo_activo_id=${activo.tipo_activo_id}`);
-                setActividadesDisponibles(actividadesResponse.data || []);
-                setComponentesDisponibles(componentesResponse.data || []);
-                setActividadesRealizadas([]);
-                setComponentesUtilizados([]);
-                setObservaciones('');
-            } catch (error) {
-                console.error('Error al cargar actividades o componentes:', error);
-                showErrorNotification('Error al cargar actividades o componentes disponibles.');
-            }
-            return;
-        }
-    
-        // Si el activo proviene de la BD
         try {
+            console.log("Inicio de fetchEspecificaciones");
+    
+            // Obtener especificaciones originales desde el backend
             const response = await api.get('/mantenimientos/actividades-del-activo', {
                 params: { mantenimiento_id: mantenimientoId, activo_id: activoId },
             });
-            console.log('Respuesta del backend:', response.data);
-            setActividadesRealizadas(response.data.actividades_realizadas || []);
+    
+            console.log("Especificaciones originales desde backend:", response.data);
+    
+            // Obtener especificaciones temporales si existen
+            const tempEspecificaciones = especificacionesTemporales[activo.codigo] || {
+                actividades: [],
+                componentes: [],
+                observaciones: '',
+            };
+    
+            console.log("Especificaciones temporales locales:", tempEspecificaciones);
+    
+            // Combinar actividades originales y temporales
+            const actividadesCombinadas = [
+                ...(response.data.actividades_realizadas || []),
+                ...(tempEspecificaciones.actividades || []),
+            ].reduce((acc, actividad) => {
+                if (!acc.find((a) => a.actividad_id === actividad.actividad_id)) {
+                    acc.push(actividad);
+                }
+                return acc;
+            }, []);
+    
+            console.log("Actividades combinadas finales:", actividadesCombinadas);
+    
+            // Combinar componentes originales y temporales
+            const componentesCombinados = [
+                ...(response.data.componentes_utilizados || []),
+                ...(tempEspecificaciones.componentes || []),
+            ].reduce((acc, componente) => {
+                if (!acc.find((c) => c.componente_id === componente.componente_id)) {
+                    acc.push(componente);
+                }
+                return acc;
+            }, []);
+    
+            console.log("Componentes combinados finales:", componentesCombinados);
+    
+            // Combinar observaciones (las temporales prevalecen si existen)
+            const observacionCombinada =
+                tempEspecificaciones.observaciones || response.data.observacion || '';
+    
+            console.log("Observaciones combinadas:", observacionCombinada);
+    
+            // Actualizar estados en el modal
+            setActividadesRealizadas(actividadesCombinadas);
+            setComponentesUtilizados(componentesCombinados);
+            setObservaciones(observacionCombinada);
+    
+            console.log("Estados actualizados en el modal");
+    
+            // Actualizar las listas disponibles
             setActividadesDisponibles(response.data.actividades_disponibles || []);
-            setComponentesUtilizados(response.data.componentes_utilizados || []);
             setComponentesDisponibles(response.data.componentes_disponibles || []);
-            setObservaciones(response.data.observacion || '');
+    
+            console.log("Listas disponibles actualizadas");
+    
+            // Actualizar especificaciones temporales (para persistir cambios locales)
+            setEspecificacionesTemporales((prev) => ({
+                ...prev,
+                [activo.codigo]: {
+                    actividades: actividadesCombinadas,
+                    componentes: componentesCombinados,
+                    observaciones: observacionCombinada,
+                },
+            }));
+    
+            console.log("Especificaciones temporales actualizadas correctamente");
         } catch (error) {
             console.error('Error al obtener las especificaciones del activo:', error);
             showErrorNotification('Error al obtener las especificaciones del activo.');
         }
     };
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     
@@ -333,26 +370,39 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId }
     const handleGuardar = () => {
         if (isSaving) return; // Evita múltiples clics mientras guarda
     
-        if (!actividadesRealizadas.length && !componentesUtilizados.length && !observaciones) {
-            showErrorNotification('Debe agregar al menos una actividad, un componente o una observación antes de guardar.');
+        // Filtrar actividades y componentes válidos
+        const actividadesValidas = actividadesRealizadas.filter((actividad) => actividad.actividad_id);
+        const componentesValidos = componentesUtilizados.filter((componente) => componente.componente_id);
+    
+        if (!actividadesValidas.length && !componentesValidos.length && !observaciones) {
+            showErrorNotification('Debe agregar al menos una actividad válida, un componente válido o una observación antes de guardar.');
             return;
         }
     
         setIsSaving(true);
     
         const especificaciones = {
-            actividades: actividadesRealizadas,
-            componentes: componentesUtilizados,
+            actividades: actividadesValidas,
+            componentes: componentesValidos,
             observaciones,
         };
     
-        // Guardar especificaciones temporalmente si es un activo nuevo
-        if (!activo?.activo_id) {
-            setEspecificacionesTemporales((prevEspecificaciones) => ({
-                ...prevEspecificaciones,
-                [activo.codigo]: especificaciones,
-            }));
-            console.log('Especificaciones temporales guardadas:', especificaciones);
+        if (JSON.stringify(especificaciones) === JSON.stringify(activo.especificaciones)) {
+            showInfoNotification('No se realizaron cambios en las especificaciones.');
+            setIsSaving(false);
+            return;
+        }
+    
+        // Actualizar especificaciones temporales independientemente de si el activo es nuevo o de la BD
+        setEspecificacionesTemporales((prevEspecificaciones) => ({
+            ...prevEspecificaciones,
+            [activo.codigo]: especificaciones,
+        }));
+        console.log('Especificaciones temporales guardadas:', especificaciones);
+    
+        // Sincronizar con el componente padre
+        if (onGuardarEspecificaciones) {
+            onGuardarEspecificaciones(activo, especificaciones);
         }
     
         setTimeout(() => {
@@ -362,6 +412,9 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId }
             onClose(); // Cierra el modal después de guardar
         }, 1500);
     };
+    
+    
+    
     
     
     
