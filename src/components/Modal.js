@@ -115,11 +115,13 @@ const Button = styled.button`
 `;
 
 const Modal = ({ isOpen, onClose, onAgregarActivo, activos }) => {
+  console.log('Activos disponibles en el modal:', activos);
   const [activoSeleccionado, setActivoSeleccionado] = useState(null);
 
   if (!isOpen) return null;
 
   const handleRowClick = (activo) => {
+    console.log('Activo seleccionado en el modal:', activo);
     setActivoSeleccionado(activo);
   };
 
@@ -169,6 +171,7 @@ const Modal = ({ isOpen, onClose, onAgregarActivo, activos }) => {
         <AddButtonWrapper>
           <Button
             onClick={() => {
+              console.log('Activo seleccionado para agregar:', activoSeleccionado);
               if (activoSeleccionado) onAgregarActivo(activoSeleccionado);
             }}
             disabled={!activoSeleccionado}

@@ -190,6 +190,7 @@ const VerMantenimiento = () => {
     const fetchActivos = async () => {
       try {
         const response = await api.get('/activos'); // Ajusta el endpoint si es necesario
+        console.log('Activos cargados en VerMantenimiento:', response.data);
         setActivos(response.data);
       } catch (error) {
         console.error('Error al cargar activos:', error);
@@ -253,6 +254,11 @@ const VerMantenimiento = () => {
   };
 
   const handleAgregarActivo = (activo) => {
+    console.log('Activo seleccionado:', activo);
+    if (!activo.id) {
+      console.error('El activo seleccionado no tiene un ID.');
+      return;
+    }
     // Combina activos del mantenimiento original y los seleccionados
     const activosTotales = [...(mantenimiento.activos || []), ...activosSeleccionados];
 
@@ -274,7 +280,7 @@ const VerMantenimiento = () => {
   const handleFechaFinChange = (value) => {
     const nuevaFechaFin = new Date(value); // Fecha seleccionada por el usuario
     const fechaOriginal = new Date(fechaFinOriginal); // Fecha original registrada
-  
+
     // Permitir regresar a la fecha original
     if (nuevaFechaFin.getTime() === fechaOriginal.getTime()) {
       setMantenimiento((prev) => ({
@@ -283,7 +289,7 @@ const VerMantenimiento = () => {
       }));
       return;
     }
-  
+
     // Validar que la nueva fecha no sea inferior a la fecha original
     if (nuevaFechaFin < fechaOriginal) {
       showErrorNotification(
@@ -291,103 +297,239 @@ const VerMantenimiento = () => {
       );
       return;
     }
-  
+
     // Actualizar la fecha de fin para fechas válidas
     setMantenimiento((prev) => ({
       ...prev,
       fecha_fin: value,
     }));
   };
-  
-  
-  
-  
+
+
+
+
   const handleGuardarMantenimiento = async () => {
     try {
-        // Validación: Asegurarse de que los datos requeridos estén completos
-        if (!mantenimiento.estado || !mantenimiento.fecha_fin) {
-            showErrorNotification('El estado y la fecha de fin son obligatorios.');
-            return;
-        }
-
-        // Consolidar los activos seleccionados
-        const activosFinales = (mantenimiento.activos || []).concat(activosSeleccionados);
-
-        if (!activosFinales.length) {
-          showErrorNotification('Debe agregar al menos un activo.');
-          return;
+      // Validación: Asegurarse de que los datos requeridos estén completos
+      if (!mantenimiento.estado || !mantenimiento.fecha_fin) {
+        showErrorNotification('El estado y la fecha de fin son obligatorios.');
+        return;
       }
-        // Filtrar los activos que tienen un activo_id válido
-        const activosValidos = activosFinales.filter((activo) => {
-            if (!activo.codigo || !activo.nombre) {
-                console.error('Datos incompletos en el activo:', activo);
-                showErrorNotification('Uno o más activos tienen información incompleta.');
-                return false;
-            }
-            return activo.activo_id;
-        });
 
-        // Verificar si hay activos no válidos
-        if (activosFinales.length !== activosValidos.length) {
-            console.error('Algunos activos no tienen un activo_id válido:', activosFinales.filter((activo) => !activo.activo_id));
-            showErrorNotification('Uno o más activos no tienen un ID válido.');
-            return;
+      // Consolidar los activos seleccionados
+      const activosFinales = (mantenimiento.activos || []).concat(activosSeleccionados);
+      console.log('Activos finales antes de filtrar:', activosFinales);
+      if (!activosFinales.length) {
+        showErrorNotification('Debe agregar al menos un activo.');
+        return;
+      }
+
+      // Dividir activos en existentes y nuevos
+      const activosExistentes = activosFinales.filter((activo) => activo.activo_id);
+      const activosNuevos = activosFinales.filter((activo) => !activo.activo_id);
+      console.log('Activos existentes:', activosExistentes);
+      console.log('Activos nuevos:', activosNuevos);
+
+      // Procesar activos nuevos (asegúrate de no intentar crear activos ya existentes)
+      const procesarActivosNuevos = async () => {
+        console.log('Iniciando procesamiento de activos nuevos...');
+        const nuevosConIds = [];
+        const activosFallidos = [];
+
+        for (const activo of activosNuevos) {
+          console.log('Procesando activo:', activo);
+          if (!activo.codigo || !activo.nombre || !activo.proceso_compra || !activo.estado) {
+            console.error('El activo no pasó la validación:');
+            if (!activo.codigo) console.error('Falta el código.');
+            if (!activo.nombre) console.error('Falta el nombre.');
+            if (!activo.proceso_compra) console.error('Falta el proceso de compra.');
+            if (!activo.estado) console.error('Falta el estado.');
+
+            activosFallidos.push(activo); // Lo agregamos al array de activos fallidos
+            showErrorNotification(
+              `El activo con código ${activo.codigo || 'desconocido'} tiene información incompleta.`
+            );
+            continue; // Ignorar este activo y pasar al siguiente
+          }
+
+          if (!activo.id && !activo.activo_id) {
+            console.error(`El activo con código ${activo.codigo} no tiene un ID válido.`);
+            showErrorNotification(`El activo con código ${activo.codigo} no tiene un ID válido.`);
+            continue; // Salta este activo
+          }
+
+          console.log('Activo válido para asociar:', activo);
+
+          try {
+            console.log('Datos enviados al backend:', {
+              mantenimiento_id: mantenimiento.mantenimiento_id,
+              activo_id: activo.id || activo.activo_id || null,
+              codigo: activo.codigo,
+              nombre: activo.nombre,
+              estado: activo.estado || 'Pendiente',
+              tipo_activo_id: activo.tipo_activo_id || null,
+              ubicacion_id: activo.ubicacion_id || null,
+              proveedor_id: activo.proveedor_id || null,
+            });
+            // Asociar el activo como parte del mantenimiento en lugar de crear uno nuevo
+            const response = await api.post('/mantenimientos/activos', {
+              mantenimiento_id: mantenimiento.mantenimiento_id,
+              activo_id: activo.id || activo.activo_id, // Debe estar presente si es un activo nuevo
+              codigo: activo.codigo,
+              nombre: activo.nombre,
+              estado: activo.estado || 'Pendiente',
+              tipo_activo_id: activo.tipo_activo_id || null,
+              ubicacion_id: activo.ubicacion_id || null,
+              proveedor_id: activo.proveedor_id || null,
+            });
+
+            console.log('Respuesta del backend:', response.data);
+            // Agrega el nuevo activo con su ID al array
+            nuevosConIds.push({
+              ...activo,
+              activo_id: response.data.activo_id, // Mantén el ID original del activo
+              mantenimiento_activo_id: response.data.mantenimiento_activo_id, // Relación para referencias internas
+            });
+          } catch (error) {
+            console.error('Error al asociar el activo al mantenimiento:', error);
+            activosFallidos.push(activo);
+            showErrorNotification(
+              `Error al asociar el activo con código ${activo.codigo || 'desconocido'}.`
+            );
+          }
         }
-        // Preparar el payload para el backend
-        const payload = {
-            estado: mantenimiento.estado,
-            fecha_fin: mantenimiento.fecha_fin,
-            activos: activosValidos.map((activo) => ({
-                activo_id: activo.activo_id,
-                codigo: activo.codigo,
-                nombre: activo.nombre,
-                especificaciones: activo.especificaciones || {
-                    actividades: activo.especificaciones?.actividades || [],
-                    componentes: activo.especificaciones?.componentes || [],
-                    observaciones: activo.especificaciones?.observaciones || '',
-                },
-            })),
+
+        if (activosFallidos.length > 0) {
+          console.warn('Activos que no se pudieron procesar:', activosFallidos);
+        }
+
+        return nuevosConIds;
+      };
+
+      // Obtener los nuevos activos procesados
+      const nuevosActivosProcesados = await procesarActivosNuevos();
+      console.log('Nuevos activos procesados:', nuevosActivosProcesados);
+
+      // Validación final: Si no hay activos válidos, mostrar error y detenerse
+      if (!activosExistentes.length && (!nuevosActivosProcesados || !nuevosActivosProcesados.length)) {
+        showErrorNotification(
+          'No se pudieron procesar los activos seleccionados. Por favor, revise los datos e inténtelo de nuevo.'
+        );
+        return;
+      }
+
+      // Combinar activos existentes y nuevos procesados
+      const activosValidos = [...activosExistentes, ...nuevosActivosProcesados].map((activo) => {
+        if (!activo.activo_id) {
+          throw new Error(`El activo con código ${activo.codigo} no tiene un ID válido.`);
+        }
+        return {
+          activo_id: activo.activo_id, // Enviar el ID correcto del activo
+          codigo: activo.codigo,
+          nombre: activo.nombre,
+          especificaciones: activo.especificaciones || {
+            actividades: [],
+            componentes: [],
+            observaciones: '',
+          },
         };
+      });
+      
+      // Preparar el payload para el backend
+      const payload = {
+        estado: mantenimiento.estado,
+        fecha_fin: mantenimiento.fecha_fin,
+        activos: activosValidos.map((activo) => {
+          if (!activo.activo_id) {
+            console.error(`El activo con código ${activo.codigo} no tiene un activo_id válido.`);
+            throw new Error(`El activo con código ${activo.codigo} no tiene un activo_id válido.`);
+          }
+          return {
+            activo_id: activo.activo_id,
+            codigo: activo.codigo,
+            nombre: activo.nombre,
+            especificaciones: activo.especificaciones || {
+              actividades: activo.especificaciones?.actividades || [],
+              componentes: activo.especificaciones?.componentes || [],
+              observaciones: activo.especificaciones?.observaciones || '',
+            },
+          };
+        }),
+      };
 
-        console.log('Payload que se envía al backend:', JSON.stringify(payload, null, 2));
+      console.log('Payload que se envía al backend:', JSON.stringify(payload, null, 2));
 
-        // Llamada al backend
-        const response = await api.put(`/mantenimientos/${mantenimiento.mantenimiento_id}`, payload);
+      // Llamada al backend
+      const response = await api.put(`/mantenimientos/${mantenimiento.mantenimiento_id}`, payload);
 
-        if (response.status === 200) {
-            showSuccessNotification('Mantenimiento guardado correctamente.');
-            setMantenimiento(response.data); // Actualizar el estado con los datos más recientes
-        } else {
-            showErrorNotification('Hubo un problema al guardar el mantenimiento.');
-        }
+      if (response.status === 200) {
+        showSuccessNotification('Mantenimiento guardado correctamente.');
+        setMantenimiento(response.data); // Actualizar el estado con los datos más recientes
+      } else {
+        showErrorNotification('Hubo un problema al guardar el mantenimiento.');
+      }
     } catch (error) {
-        console.error('Error al guardar el mantenimiento:', error);
-        showErrorNotification('Error al guardar el mantenimiento. Por favor, inténtalo de nuevo.');
+      console.error('Error al guardar el mantenimiento:', error);
+      showErrorNotification('Error al guardar el mantenimiento. Por favor, inténtalo de nuevo.');
     }
-};
+  };
 
 
-  
-  
+
+
+
+  const agregarActivoAMantenimiento = async (mantenimientoId, activoId) => {
+    try {
+      const response = await fetch('/api/mantenimientos/activos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mantenimiento_id: mantenimientoId,
+          activo_id: activoId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showSuccessNotification('Activo agregado correctamente al mantenimiento.');
+      } else {
+        showErrorNotification(`Error: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('Error al agregar el activo al mantenimiento:', error);
+      showErrorNotification('Error al agregar el activo. Intente nuevamente.');
+    }
+  };
+
+
+
+
+
+
+
+
   const handleGuardarEspecificaciones = (activo, especificaciones) => {
     setMantenimiento((prev) => ({
-        ...prev,
-        activos: prev.activos.map((a) =>
-            a.codigo === activo.codigo ? { ...a, especificaciones } : a
-        ),
+      ...prev,
+      activos: prev.activos.map((a) =>
+        a.codigo === activo.codigo ? { ...a, especificaciones } : a
+      ),
     }));
 
     setActivosSeleccionados((prev) =>
-        prev.map((a) =>
-            a.codigo === activo.codigo ? { ...a, especificaciones } : a
-        )
+      prev.map((a) =>
+        a.codigo === activo.codigo ? { ...a, especificaciones } : a
+      )
     );
-};
+  };
 
 
-  
-  
-  
+
+
+
 
 
 
@@ -505,12 +647,12 @@ const VerMantenimiento = () => {
 
           </TableWrapper>
           <Button
-  type="button"
-  onClick={handleGuardarMantenimiento}
-  style={{ marginTop: '20px' }}
->
-  Guardar Mantenimiento
-</Button>
+            type="button"
+            onClick={handleGuardarMantenimiento}
+            style={{ marginTop: '20px' }}
+          >
+            Guardar Mantenimiento
+          </Button>
         </FormWrapper>
 
       </Container>
