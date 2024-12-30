@@ -169,7 +169,8 @@ const VerMantenimiento = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activoSeleccionado, setActivoSeleccionado] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const isTerminado = mantenimiento.estado === 'Terminado';
+  const [isTerminadoFromDB, setIsTerminadoFromDB] = useState(false);
   const location = useLocation();
   const mantenimientoId = location.state?.id || mantenimiento?.mantenimiento_id;
   const [isAgregarActivoModalOpen, setIsAgregarActivoModalOpen] = useState(false);
@@ -205,6 +206,11 @@ const VerMantenimiento = () => {
       const response = await api.get(`/mantenimientos/${id}`);
       setMantenimiento(response.data);
       setFechaFinOriginal(response.data.fecha_fin);
+
+      if (response.data.estado === 'Terminado') {
+        setIsTerminadoFromDB(true);
+      }
+
       setIsLoading(false);
     } catch (error) {
       console.error('Error al cargar los datos del mantenimiento:', error);
@@ -306,7 +312,13 @@ const VerMantenimiento = () => {
   };
 
 
-
+  const handleEstadoChange = (e) => {
+    const nuevoEstado = e.target.value;
+    setMantenimiento((prev) => ({
+      ...prev,
+      estado: nuevoEstado,
+    }));
+  };
 
   const handleGuardarMantenimiento = async () => {
     try {
@@ -434,7 +446,7 @@ const VerMantenimiento = () => {
           },
         };
       });
-      
+
       // Preparar el payload para el backend
       const payload = {
         estado: mantenimiento.estado,
@@ -573,27 +585,52 @@ const VerMantenimiento = () => {
                   type="date"
                   value={mantenimiento.fecha_fin?.split('T')[0] || ''}
                   onChange={(e) => handleFechaFinChange(e.target.value)}
-                  disabled={!isFechaFinEnabled}
+                  disabled={isTerminadoFromDB || !isFechaFinEnabled}
                 />
+
               </FormGroup>
 
 
               <FormGroup>
                 <Label style={{ marginBottom: '10px' }}>Estado:</Label>
-                <Input type="text" value={mantenimiento.estado || ''} readOnly />
 
-                {/* Botón Agregar Activo debajo de Estado */}
-                <Label style={{ marginTop: '20px', marginBottom: '10px' }}>Agregar Activo:</Label>
-                <Button
-                  type="button"
-                  onClick={handleOpenAgregarActivoModal}
+                {/* Si vino de BD con estado = "Terminado", se bloquea el combo. */}
+                <select
                   style={{
-                    padding: '10px 15px',
-                    textAlign: 'center',
+                    padding: '10px',
+                    fontSize: '14px',
+                    borderRadius: '5px',
+                    border: '1px solid #ccc',
                   }}
+                  value={mantenimiento.estado || ''}
+                  onChange={(e) => {
+                    // Actualiza el estado localmente
+                    setMantenimiento(prev => ({ ...prev, estado: e.target.value }));
+                  }}
+                  disabled={isTerminadoFromDB} // Bloqueado si vino "Terminado" de la BD
                 >
-                  Abrir Lista de Activos
-                </Button>
+                  <option value="Activo">Activo</option>
+                  <option value="Terminado">Terminado</option>
+                </select>
+
+                {/* Botón "Agregar Activo" */}
+                {!isTerminadoFromDB && (
+                  <>
+                    <Label style={{ marginTop: '20px', marginBottom: '10px' }}>
+                      Agregar Activo:
+                    </Label>
+                    <Button
+                      type="button"
+                      onClick={handleOpenAgregarActivoModal}
+                      style={{
+                        padding: '10px 15px',
+                        textAlign: 'center',
+                      }}
+                    >
+                      Abrir Lista de Activos
+                    </Button>
+                  </>
+                )}
               </FormGroup>
 
 
@@ -646,13 +683,15 @@ const VerMantenimiento = () => {
             </Table>
 
           </TableWrapper>
-          <Button
-            type="button"
-            onClick={handleGuardarMantenimiento}
-            style={{ marginTop: '20px' }}
-          >
-            Guardar Mantenimiento
-          </Button>
+          {!isTerminadoFromDB && (
+            <Button
+              type="button"
+              onClick={handleGuardarMantenimiento}
+              style={{ marginTop: '20px' }}
+            >
+              Guardar Mantenimiento
+            </Button>
+          )}
         </FormWrapper>
 
       </Container>
@@ -670,6 +709,7 @@ const VerMantenimiento = () => {
         activo={activoSeleccionado}
         mantenimientoId={mantenimiento?.mantenimiento_id}
         onGuardarEspecificaciones={handleGuardarEspecificaciones}
+        isTerminadoFromDB={isTerminadoFromDB}
       />
     </>
   );

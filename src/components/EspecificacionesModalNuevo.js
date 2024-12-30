@@ -152,7 +152,7 @@ const Input = styled.textarea`
   width: 96.5%; /* Ajusta el tamaño horizontal */
 `;
 
-const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId, onGuardarEspecificaciones }) => {
+const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId, onGuardarEspecificaciones, isTerminadoFromDB }) => {
     const [actividadesRealizadas, setActividadesRealizadas] = useState([]);
     const [actividadesDisponibles, setActividadesDisponibles] = useState([]);
     const [componentesUtilizados, setComponentesUtilizados] = useState([]);
@@ -171,118 +171,118 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId, 
     const fetchEspecificaciones = async (mantenimientoId, activoId) => {
         const especificacionesGuardadas = especificacionesTemporales[activo.codigo];
         if (especificacionesGuardadas) {
-          console.log("Cargando especificaciones temporales:", especificacionesGuardadas);
-          setActividadesRealizadas(especificacionesGuardadas.actividades || []);
-          setComponentesUtilizados(especificacionesGuardadas.componentes || []);
-          setObservaciones(especificacionesGuardadas.observaciones || '');
-          return; // Evitamos cargar desde el backend si ya hay datos temporales
+            console.log("Cargando especificaciones temporales:", especificacionesGuardadas);
+            setActividadesRealizadas(especificacionesGuardadas.actividades || []);
+            setComponentesUtilizados(especificacionesGuardadas.componentes || []);
+            setObservaciones(especificacionesGuardadas.observaciones || '');
+            return; // Evitamos cargar desde el backend si ya hay datos temporales
         }
-      
+
         // Si no hay activoId, inicializa datos vacíos para un nuevo activo
         if (!activoId) {
-          console.log("Activo nuevo, inicializando especificaciones vacías.");
-          await fetchEspecificacionesNuevo(activo); // Llama a la función para inicializar activos nuevos
-          return; // Salimos porque no necesitamos consultar al backend
-        }
-      
-        try {
-          // Si no hay activoId, inicializa datos vacíos para un nuevo activo
-          if (!activoId) {
             console.log("Activo nuevo, inicializando especificaciones vacías.");
-            setActividadesDisponibles([]);
-            setComponentesDisponibles([]);
-            setActividadesRealizadas([]);
-            setComponentesUtilizados([]);
-            setObservaciones('');
-            return;
-          }
-      
-          console.log("Inicio de fetchEspecificaciones");
-      
-          // Obtener especificaciones originales desde el backend
-          const response = await api.get('/mantenimientos/actividades-del-activo', {
-            params: { mantenimiento_id: mantenimientoId, activo_id: activoId },
-          });
-      
-          console.log("Especificaciones originales desde backend:", response.data);
-      
-          // Obtener especificaciones temporales si existen
-          const tempEspecificaciones = especificacionesTemporales[activo.codigo] || {
-            actividades: [],
-            componentes: [],
-            observaciones: '',
-          };
-      
-          console.log("Especificaciones temporales locales:", tempEspecificaciones);
-      
-          // --- Ajuste en la forma de combinar actividades ---
-          const backendActividades = response.data.actividades_realizadas || [];
-          const tempActividades = tempEspecificaciones.actividades || [];
-      
-          // Copiamos primero las de backend
-          const actividadesCombinadas = [...backendActividades];
-          // Agregamos solo las que no existan ya
-          tempActividades.forEach((actTmp) => {
-            const existe = actividadesCombinadas.some(
-              (a) => a.actividad_id === actTmp.actividad_id
-            );
-            if (!existe) {
-              actividadesCombinadas.push(actTmp);
-            }
-          });
-          console.log("Actividades combinadas finales:", actividadesCombinadas);
-      
-          // --- Ajuste en la forma de combinar componentes ---
-          const backendComponentes = response.data.componentes_utilizados || [];
-          const tempComponentes = tempEspecificaciones.componentes || [];
-      
-          const componentesCombinados = [...backendComponentes];
-          tempComponentes.forEach((compTmp) => {
-            const existe = componentesCombinados.some(
-              (c) => c.componente_id === compTmp.componente_id
-            );
-            if (!existe) {
-              componentesCombinados.push(compTmp);
-            }
-          });
-          console.log("Componentes combinados finales:", componentesCombinados);
-      
-          // Combinar observaciones (las temporales prevalecen si existen)
-          const observacionCombinada =
-            tempEspecificaciones.observaciones || response.data.observacion || '';
-      
-          console.log("Observaciones combinadas:", observacionCombinada);
-      
-          // Actualizar estados en el modal
-          setActividadesRealizadas(actividadesCombinadas);
-          setComponentesUtilizados(componentesCombinados);
-          setObservaciones(observacionCombinada);
-      
-          console.log("Estados actualizados en el modal");
-      
-          // Actualizar las listas disponibles
-          setActividadesDisponibles(response.data.actividades_disponibles || []);
-          setComponentesDisponibles(response.data.componentes_disponibles || []);
-      
-          console.log("Listas disponibles actualizadas");
-      
-          // Actualizar especificaciones temporales (para persistir cambios locales)
-          setEspecificacionesTemporales((prev) => ({
-            ...prev,
-            [activo.codigo]: {
-              actividades: actividadesCombinadas,
-              componentes: componentesCombinados,
-              observaciones: observacionCombinada,
-            },
-          }));
-      
-          console.log("Especificaciones temporales actualizadas correctamente");
-        } catch (error) {
-          console.error('Error al obtener las especificaciones del activo:', error);
-          showErrorNotification('Error al obtener las especificaciones del activo.');
+            await fetchEspecificacionesNuevo(activo); // Llama a la función para inicializar activos nuevos
+            return; // Salimos porque no necesitamos consultar al backend
         }
-      };
-      
+
+        try {
+            // Si no hay activoId, inicializa datos vacíos para un nuevo activo
+            if (!activoId) {
+                console.log("Activo nuevo, inicializando especificaciones vacías.");
+                setActividadesDisponibles([]);
+                setComponentesDisponibles([]);
+                setActividadesRealizadas([]);
+                setComponentesUtilizados([]);
+                setObservaciones('');
+                return;
+            }
+
+            console.log("Inicio de fetchEspecificaciones");
+
+            // Obtener especificaciones originales desde el backend
+            const response = await api.get('/mantenimientos/actividades-del-activo', {
+                params: { mantenimiento_id: mantenimientoId, activo_id: activoId },
+            });
+
+            console.log("Especificaciones originales desde backend:", response.data);
+
+            // Obtener especificaciones temporales si existen
+            const tempEspecificaciones = especificacionesTemporales[activo.codigo] || {
+                actividades: [],
+                componentes: [],
+                observaciones: '',
+            };
+
+            console.log("Especificaciones temporales locales:", tempEspecificaciones);
+
+            // --- Ajuste en la forma de combinar actividades ---
+            const backendActividades = response.data.actividades_realizadas || [];
+            const tempActividades = tempEspecificaciones.actividades || [];
+
+            // Copiamos primero las de backend
+            const actividadesCombinadas = [...backendActividades];
+            // Agregamos solo las que no existan ya
+            tempActividades.forEach((actTmp) => {
+                const existe = actividadesCombinadas.some(
+                    (a) => a.actividad_id === actTmp.actividad_id
+                );
+                if (!existe) {
+                    actividadesCombinadas.push(actTmp);
+                }
+            });
+            console.log("Actividades combinadas finales:", actividadesCombinadas);
+
+            // --- Ajuste en la forma de combinar componentes ---
+            const backendComponentes = response.data.componentes_utilizados || [];
+            const tempComponentes = tempEspecificaciones.componentes || [];
+
+            const componentesCombinados = [...backendComponentes];
+            tempComponentes.forEach((compTmp) => {
+                const existe = componentesCombinados.some(
+                    (c) => c.componente_id === compTmp.componente_id
+                );
+                if (!existe) {
+                    componentesCombinados.push(compTmp);
+                }
+            });
+            console.log("Componentes combinados finales:", componentesCombinados);
+
+            // Combinar observaciones (las temporales prevalecen si existen)
+            const observacionCombinada =
+                tempEspecificaciones.observaciones || response.data.observacion || '';
+
+            console.log("Observaciones combinadas:", observacionCombinada);
+
+            // Actualizar estados en el modal
+            setActividadesRealizadas(actividadesCombinadas);
+            setComponentesUtilizados(componentesCombinados);
+            setObservaciones(observacionCombinada);
+
+            console.log("Estados actualizados en el modal");
+
+            // Actualizar las listas disponibles
+            setActividadesDisponibles(response.data.actividades_disponibles || []);
+            setComponentesDisponibles(response.data.componentes_disponibles || []);
+
+            console.log("Listas disponibles actualizadas");
+
+            // Actualizar especificaciones temporales (para persistir cambios locales)
+            setEspecificacionesTemporales((prev) => ({
+                ...prev,
+                [activo.codigo]: {
+                    actividades: actividadesCombinadas,
+                    componentes: componentesCombinados,
+                    observaciones: observacionCombinada,
+                },
+            }));
+
+            console.log("Especificaciones temporales actualizadas correctamente");
+        } catch (error) {
+            console.error('Error al obtener las especificaciones del activo:', error);
+            showErrorNotification('Error al obtener las especificaciones del activo.');
+        }
+    };
+
 
 
     const handleObservacionesChange = (e) => {
@@ -488,7 +488,7 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId, 
         }));
         onClose(); // Llama a la función existente para cerrar el modal
     };
-    
+
 
 
 
@@ -583,7 +583,11 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId, 
                                         <TableData>{actividad.nombre || actividad.actividad_disponible || 'Nombre no disponible'}</TableData>
 
                                         <TableData>
-                                            <Button onClick={() => agregarActividad(actividad)}>Agregar</Button>
+                                            {!isTerminadoFromDB && (
+                                                <Button onClick={() => agregarActividad(actividad)}>
+                                                    Agregar
+                                                </Button>
+                                            )}
                                         </TableData>
                                     </TableRow>
                                 ))
@@ -641,7 +645,11 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId, 
                                         <TableRow key={`componente-disponible-${componente.componente_id || index}`}>
                                             <TableData>{componente.nombre || componente.componente_disponible || 'Nombre no disponible'}</TableData>
                                             <TableData>
-                                                <Button onClick={() => agregarComponente(componente)}>Agregar</Button>
+                                                {!isTerminadoFromDB && (
+                                                    <Button onClick={() => agregarComponente(componente)}>
+                                                        Agregar
+                                                    </Button>
+                                                )}
                                             </TableData>
                                         </TableRow>
                                     ))
@@ -695,6 +703,7 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId, 
                                             placeholder="Escriba aquí las observaciones..."
                                             value={observaciones}
                                             onChange={handleObservacionesChange}
+                                            disabled={isTerminadoFromDB} // No permite edición si Terminado
                                         />
                                     </TableData>
                                 </TableRow>
@@ -703,9 +712,11 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId, 
                     </ScrollableTableContainer>
                 </Section>
 
-                <Button onClick={handleGuardar} disabled={isSaving}>
-                    {isSaving ? 'Guardando...' : 'Guardar'}
-                </Button>
+                {!isTerminadoFromDB && (
+                    <Button onClick={handleGuardar}>
+                        {isSaving ? 'Guardando...' : 'Guardar'}
+                    </Button>
+                )}
 
             </ModalContent>
         </ModalContainer>
