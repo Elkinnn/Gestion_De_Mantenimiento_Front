@@ -447,6 +447,14 @@ const VerMantenimiento = () => {
         };
       });
 
+      if (mantenimiento.estado === 'Terminado') {
+        activosValidos.forEach((activo) => {
+          if (activo.estado === 'No Funcionando') {
+            activo.estado = 'Funcionando';
+          }
+        });
+      }
+
       // Preparar el payload para el backend
       const payload = {
         estado: mantenimiento.estado,
