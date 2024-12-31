@@ -218,84 +218,96 @@ const VerMantenimiento = () => {
     }
   };
 
-  const handleViewEspecificaciones = (activo) => {
+  const handleViewEspecificaciones = async (activo) => {
     if (!activo) {
-      console.warn('Intentaste ver especificaciones sin seleccionar un activo.');
-      return;
+        console.warn('Intentaste ver especificaciones sin seleccionar un activo.');
+        return;
     }
-  
+
     console.log('Activo seleccionado:', activo); // Depuración
-  
-    // Verifica si el activo tiene un activo_id válido
+
+    // Si el activo no tiene activo_id, es inválido
     if (!activo.activo_id) {
-      console.error('El activo no tiene un activo_id válido.');
-      setActivoSeleccionado({
-        ...activo,
-        especificaciones: {
-          actividades_realizadas: [],
-          componentes_utilizados: [],
-          observaciones: '',
-        },
-      });
-      setIsModalOpen(true);
-      return;
+        console.error('El activo no tiene un activo_id válido.');
+        return;
     }
-  
-    // Si el activo es nuevo (sin mantenimiento_activo_id), inicializa datos vacíos
+
+    // Si el activo no tiene mantenimiento_activo_id, asociarlo al mantenimiento
     if (!activo.mantenimiento_activo_id) {
-      console.log('El activo es nuevo y no tiene mantenimiento_activo_id. Inicializando datos vacíos.');
-      
-      setActivoSeleccionado({
-        ...activo,
-        especificaciones: {
-          actividades_realizadas: [],
-          componentes_utilizados: [],
-          observaciones: '',
-        },
-      });
-      setIsModalOpen(true);
-      return;
+        console.log('El activo es nuevo. Asociándolo al mantenimiento en el backend.');
+        try {
+            const response = await api.post('/mantenimientos/activos', {
+                mantenimiento_id: mantenimiento.mantenimiento_id,
+                activo_id: activo.activo_id,
+                especificaciones: activo.especificaciones || {
+                    actividades_realizadas: [],
+                    componentes_utilizados: [],
+                    observaciones: '',
+                },
+            });
+
+            console.log('Activo asociado exitosamente:', response.data);
+            activo.mantenimiento_activo_id = response.data.mantenimiento_activo_id; // Actualiza con el nuevo ID
+
+            // Recuperar especificaciones desde el backend
+            const especificacionesResponse = await api.get('/mantenimientos/actividades-del-activo', {
+                params: {
+                    mantenimiento_id: mantenimiento.mantenimiento_id,
+                    activo_id: activo.activo_id,
+                },
+            });
+            console.log('Especificaciones obtenidas:', especificacionesResponse.data);
+
+            setActivoSeleccionado({
+                ...activo,
+                especificaciones: especificacionesResponse.data,
+            });
+        } catch (error) {
+            console.error('Error al asociar activo o cargar especificaciones:', error);
+            setActivoSeleccionado({
+                ...activo,
+                especificaciones: {
+                    actividades_realizadas: [],
+                    componentes_utilizados: [],
+                    observaciones: '',
+                },
+            });
+        } finally {
+            setIsModalOpen(true);
+        }
+        return;
     }
-  
-    // Si el activo tiene mantenimiento_activo_id, busca las especificaciones desde el backend
-    const fetchEspecificaciones = async () => {
-      try {
-        const response = await api.get('/api/mantenimientos/actividades-del-activo', {
-          params: {
-            mantenimiento_id: mantenimiento.mantenimiento_id,
-            activo_id: activo.activo_id,
-          },
+
+    // Activo ya tiene mantenimiento_activo_id, cargar especificaciones
+    try {
+        const response = await api.get('mantenimientos/actividades-del-activo', {
+            params: {
+                mantenimiento_id: mantenimiento.mantenimiento_id,
+                activo_id: activo.activo_id,
+            },
         });
         console.log('Especificaciones obtenidas:', response.data);
-  
-        // Fusiona especificaciones existentes con las nuevas (si aplica)
-        const especificacionesCompletas = {
-          actividades_realizadas: response.data.actividades_realizadas || [],
-          componentes_utilizados: response.data.componentes_utilizados || [],
-          observaciones: response.data.observaciones || '',
-        };
-  
+
         setActivoSeleccionado({
-          ...activo,
-          especificaciones: especificacionesCompletas,
+            ...activo,
+            especificaciones: response.data,
         });
-      } catch (error) {
-        console.error('Error al obtener las especificaciones del activo:', error);
+    } catch (error) {
+        console.error('Error al cargar especificaciones:', error);
         setActivoSeleccionado({
-          ...activo,
-          especificaciones: {
-            actividades_realizadas: [],
-            componentes_utilizados: [],
-            observaciones: '',
-          },
+            ...activo,
+            especificaciones: {
+                actividades_realizadas: [],
+                componentes_utilizados: [],
+                observaciones: '',
+            },
         });
-      } finally {
+    } finally {
         setIsModalOpen(true);
-      }
-    };
+    }
+};
+
   
-    fetchEspecificaciones();
-  };
   
   
   
