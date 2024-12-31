@@ -169,12 +169,14 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId, 
     }, [activo, mantenimientoId]);
 
     const fetchEspecificaciones = async (mantenimientoId, activoId) => {
+        console.log("Ejecutando fetchEspecificaciones con:", { mantenimientoId, activoId, activo });
         const especificacionesGuardadas = especificacionesTemporales[activo.codigo];
         if (especificacionesGuardadas) {
             console.log("Cargando especificaciones temporales:", especificacionesGuardadas);
             setActividadesRealizadas(especificacionesGuardadas.actividades || []);
             setComponentesUtilizados(especificacionesGuardadas.componentes || []);
             setObservaciones(especificacionesGuardadas.observaciones || '');
+            console.log("Cargadas especificaciones temporales para:", activo.codigo);
             return; // Evitamos cargar desde el backend si ya hay datos temporales
         }
     
@@ -182,6 +184,7 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId, 
         if (!activoId) {
             console.log("Activo nuevo, inicializando especificaciones vacías.");
             await fetchEspecificacionesNuevo(activo); // Llama a la función para inicializar activos nuevos
+            console.log("Inicialización de especificaciones vacías para activo nuevo completada.");
             return; // Salimos porque no necesitamos consultar al backend
         }
     
@@ -213,18 +216,31 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId, 
                 (componente) => componente.tipo_activo_id === activo.tipo_activo_id
             );
     
+            // Combinar actividades y componentes con las temporales si existen
+            const actividadesFinales = especificacionesGuardadas?.actividades?.length
+                ? especificacionesGuardadas.actividades
+                : actividadesRealizadasValidas;
+    
+            const componentesFinales = especificacionesGuardadas?.componentes?.length
+                ? especificacionesGuardadas.componentes
+                : componentesUtilizadosValidos;
+    
             // Combinar observaciones (priorizar las temporales si existen)
             const observacionCombinada =
-                especificacionesGuardadas?.observaciones || response.data.observacion || '';
+                especificacionesGuardadas?.observaciones?.trim() || // Usa las observaciones temporales si existen
+                (response.data.observacion && response.data.observacion.trim()) || // Usa la observación del backend si existe
+                observaciones?.trim() || // Usa la observación actual si existe
+                '';
     
-            console.log("Actividades válidas disponibles:", actividadesDisponiblesValidas);
-            console.log("Actividades válidas realizadas:", actividadesRealizadasValidas);
-            console.log("Componentes válidos disponibles:", componentesDisponiblesValidos);
-            console.log("Componentes válidos utilizados:", componentesUtilizadosValidos);
+            console.log("Observación del backend:", response.data.observacion);
+            console.log("Observación temporal previa:", especificacionesGuardadas?.observaciones);
+            console.log("Observación combinada final:", observacionCombinada);
+            console.log("Actividades finales:", actividadesFinales);
+            console.log("Componentes finales:", componentesFinales);
     
             // Actualizar estados en el modal
-            setActividadesRealizadas(actividadesRealizadasValidas);
-            setComponentesUtilizados(componentesUtilizadosValidos);
+            setActividadesRealizadas(actividadesFinales);
+            setComponentesUtilizados(componentesFinales);
             setObservaciones(observacionCombinada);
             setActividadesDisponibles(actividadesDisponiblesValidas);
             setComponentesDisponibles(componentesDisponiblesValidos);
@@ -235,8 +251,8 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId, 
             setEspecificacionesTemporales((prev) => ({
                 ...prev,
                 [activo.codigo]: {
-                    actividades: actividadesRealizadasValidas,
-                    componentes: componentesUtilizadosValidos,
+                    actividades: actividadesFinales,
+                    componentes: componentesFinales,
                     observaciones: observacionCombinada,
                 },
             }));
@@ -248,6 +264,7 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId, 
         }
     };
     
+
 
 
     const handleObservacionesChange = (e) => {
@@ -464,55 +481,103 @@ const EspecificacionesModalNuevo = ({ isOpen, onClose, activo, mantenimientoId, 
     const handleGuardar = () => {
         if (isSaving) return; // Evita múltiples clics mientras guarda
     
+        console.log("Iniciando proceso de guardar especificaciones.");
+        console.log("Actividades realizadas antes de filtrar:", actividadesRealizadas);
+        console.log("Componentes utilizados antes de filtrar:", componentesUtilizados);
+        console.log("Observaciones actuales:", observaciones);
+    
         // Filtrar actividades y componentes válidos
         const actividadesValidas = actividadesRealizadas.filter(
-            (actividad) => actividad.actividad_id && actividadesDisponibles.some((disp) => disp.actividad_id === actividad.actividad_id)
+            (actividad) =>
+                actividad.actividad_id &&
+                actividadesDisponibles.some((disp) => disp.actividad_id === actividad.actividad_id)
         );
     
         const componentesValidos = componentesUtilizados.filter(
-            (componente) => componente.componente_id && componentesDisponibles.some((disp) => disp.componente_id === componente.componente_id)
+            (componente) =>
+                componente.componente_id &&
+                componentesDisponibles.some((disp) => disp.componente_id === componente.componente_id)
         );
     
-        if (!actividadesValidas.length && !componentesValidos.length && !observaciones.trim()) {
-            showErrorNotification('Debe agregar al menos una actividad válida, un componente válido o una observación antes de guardar.');
-            return;
+        // Obtener las especificaciones actuales y originales para comparar
+        const especificacionesActuales = {
+            actividades: actividadesValidas.length > 0 ? actividadesValidas : activo.especificaciones?.actividades || [],
+            componentes: componentesValidos.length > 0 ? componentesValidos : activo.especificaciones?.componentes || [],
+            observaciones: observaciones.trim(),
+        };
+    
+        const especificacionesOriginales = activo.especificaciones || {
+            actividades: [],
+            componentes: [],
+            observaciones: "",
+        };
+    
+        // Comparar actividades
+        const actividadesModificadas =
+            JSON.stringify(especificacionesActuales.actividades) !==
+            JSON.stringify(especificacionesOriginales.actividades);
+    
+        // Comparar componentes
+        const componentesModificados =
+            JSON.stringify(especificacionesActuales.componentes) !==
+            JSON.stringify(especificacionesOriginales.componentes);
+    
+        // Comparar observaciones
+        const observacionesModificadas =
+            especificacionesActuales.observaciones !== especificacionesOriginales.observaciones;
+    
+        console.log("Actividades modificadas:", actividadesModificadas);
+        console.log("Componentes modificados:", componentesModificados);
+        console.log("Observaciones modificadas:", observacionesModificadas);
+    
+        // Nueva validación: si no hay cambios en actividades, componentes ni observaciones
+        if (!actividadesModificadas && !componentesModificados && !observacionesModificadas) {
+            showErrorNotification(
+                "Debe realizar al menos un cambio en actividades, componentes o en las observaciones antes de guardar."
+            );
+            return; // Salir sin guardar
         }
     
         setIsSaving(true);
     
-        const especificaciones = {
-            actividades: actividadesValidas,
-            componentes: componentesValidos,
-            observaciones: observaciones.trim(),
-        };
+        console.log("Especificaciones actuales del activo:", especificacionesOriginales);
+        console.log("Especificaciones generadas:", especificacionesActuales);
     
-        // Evitar guardar si no hay cambios en las especificaciones
-        if (JSON.stringify(especificaciones) === JSON.stringify(activo.especificaciones)) {
-            showInfoNotification('No se realizaron cambios en las especificaciones.');
-            setIsSaving(false);
-            return;
-        }
+        console.log("Actualizando especificaciones temporales para el activo:", activo.codigo);
+        // Actualizar especificaciones temporales
+        setEspecificacionesTemporales((prevEspecificaciones) => {
+            const updatedEspecificaciones = {
+                ...prevEspecificaciones,
+                [activo.codigo]: especificacionesActuales,
+            };
+            console.log('Especificaciones temporales después de la actualización:', updatedEspecificaciones);
+            return updatedEspecificaciones;
+        });
     
-        // Actualizar especificaciones temporales independientemente de si el activo es nuevo o de la BD
-        setEspecificacionesTemporales((prevEspecificaciones) => ({
-            ...prevEspecificaciones,
-            [activo.codigo]: especificaciones,
-        }));
-        console.log('Especificaciones temporales guardadas:', especificaciones);
+        console.log('Especificaciones temporales guardadas:', especificacionesActuales);
     
         // Sincronizar con el componente padre
         if (onGuardarEspecificaciones) {
-            onGuardarEspecificaciones(activo, especificaciones);
+            console.log("Sincronizando especificaciones con el componente padre:", especificacionesActuales);
+            onGuardarEspecificaciones(activo, especificacionesActuales);
+        } else {
+            console.warn("onGuardarEspecificaciones no está definido. Especificaciones no sincronizadas.");
         }
     
         setTimeout(() => {
-            console.log('Especificaciones guardadas:', especificaciones);
+            console.log('Especificaciones guardadas:', especificacionesActuales);
             showSuccessNotification('Especificaciones guardadas con éxito.');
             setIsSaving(false);
+            console.log("Cerrando el modal después de guardar las especificaciones.");
             onClose(); // Cierra el modal después de guardar
+            console.log("Modal cerrado correctamente.");
         }, 1500);
     };
     
+    
+    
+    
+
 
 
 
