@@ -224,6 +224,8 @@ const VerMantenimiento = () => {
       return;
     }
 
+    console.log('Activo seleccionado:', activo); // Depuración
+
     // Verifica si el activo es nuevo (sin activo_id)
     const esNuevoActivo = !activo.activo_id;
 
@@ -238,12 +240,25 @@ const VerMantenimiento = () => {
         },
       });
     } else {
-      // Si el activo ya existe, pasa directamente
-      setActivoSeleccionado(activo);
+      // Si el activo ya existe, asegura que las especificaciones están completas
+      const especificacionesCompletas = {
+        actividades_realizadas: activo.especificaciones?.actividades_realizadas || [],
+        componentes_utilizados: activo.especificaciones?.componentes_utilizados || [],
+        observaciones: activo.especificaciones?.observaciones || activo.observacion || '', // Asegura que siempre haya un valor
+      };
+
+      setActivoSeleccionado({
+        ...activo,
+        especificaciones: especificacionesCompletas,
+      });
+
+      console.log('Especificaciones cargadas:', especificacionesCompletas); // Depuración
     }
 
     setIsModalOpen(true);
   };
+
+  
 
 
   if (isLoading) {
