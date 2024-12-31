@@ -223,14 +223,12 @@ const VerMantenimiento = () => {
       console.warn('Intentaste ver especificaciones sin seleccionar un activo.');
       return;
     }
-
+  
     console.log('Activo seleccionado:', activo); // Depuración
-
-    // Verifica si el activo es nuevo (sin activo_id)
-    const esNuevoActivo = !activo.activo_id;
-
-    // Si es nuevo, inicializa especificaciones vacías
-    if (esNuevoActivo) {
+  
+    // Verifica si el activo tiene un activo_id válido
+    if (!activo.activo_id) {
+      console.error('El activo no tiene un activo_id válido.');
       setActivoSeleccionado({
         ...activo,
         especificaciones: {
@@ -239,25 +237,67 @@ const VerMantenimiento = () => {
           observaciones: '',
         },
       });
-    } else {
-      // Si el activo ya existe, asegura que las especificaciones están completas
-      const especificacionesCompletas = {
-        actividades_realizadas: activo.especificaciones?.actividades_realizadas || [],
-        componentes_utilizados: activo.especificaciones?.componentes_utilizados || [],
-        observaciones: activo.especificaciones?.observaciones || activo.observacion || '', // Asegura que siempre haya un valor
-      };
-
+      setIsModalOpen(true);
+      return;
+    }
+  
+    // Si el activo es nuevo (sin mantenimiento_activo_id), inicializa datos vacíos
+    if (!activo.mantenimiento_activo_id) {
+      console.log('El activo es nuevo y no tiene mantenimiento_activo_id. Inicializando datos vacíos.');
+      
       setActivoSeleccionado({
         ...activo,
-        especificaciones: especificacionesCompletas,
+        especificaciones: {
+          actividades_realizadas: [],
+          componentes_utilizados: [],
+          observaciones: '',
+        },
       });
-
-      console.log('Especificaciones cargadas:', especificacionesCompletas); // Depuración
+      setIsModalOpen(true);
+      return;
     }
-
-    setIsModalOpen(true);
+  
+    // Si el activo tiene mantenimiento_activo_id, busca las especificaciones desde el backend
+    const fetchEspecificaciones = async () => {
+      try {
+        const response = await api.get('/api/mantenimientos/actividades-del-activo', {
+          params: {
+            mantenimiento_id: mantenimiento.mantenimiento_id,
+            activo_id: activo.activo_id,
+          },
+        });
+        console.log('Especificaciones obtenidas:', response.data);
+  
+        // Fusiona especificaciones existentes con las nuevas (si aplica)
+        const especificacionesCompletas = {
+          actividades_realizadas: response.data.actividades_realizadas || [],
+          componentes_utilizados: response.data.componentes_utilizados || [],
+          observaciones: response.data.observaciones || '',
+        };
+  
+        setActivoSeleccionado({
+          ...activo,
+          especificaciones: especificacionesCompletas,
+        });
+      } catch (error) {
+        console.error('Error al obtener las especificaciones del activo:', error);
+        setActivoSeleccionado({
+          ...activo,
+          especificaciones: {
+            actividades_realizadas: [],
+            componentes_utilizados: [],
+            observaciones: '',
+          },
+        });
+      } finally {
+        setIsModalOpen(true);
+      }
+    };
+  
+    fetchEspecificaciones();
   };
-
+  
+  
   
 
 
@@ -280,16 +320,21 @@ const VerMantenimiento = () => {
       console.error('El activo seleccionado no tiene un ID.');
       return;
     }
+    const activoConIdCorregido = {
+      ...activo,
+      activo_id: activo.id, // Mapea id a activo_id
+    };
     // Combina activos del mantenimiento original y los seleccionados
     const activosTotales = [...(mantenimiento.activos || []), ...activosSeleccionados];
 
     // Verifica si el activo ya existe en la lista
-    const existe = activosTotales.some((a) => a.codigo === activo.codigo);
+    const existe = activosTotales.some((a) => a.activo_id === activoConIdCorregido.activo_id);
+
 
     if (existe) {
       showInfoNotification('El activo ya está agregado.');
     } else {
-      setActivosSeleccionados([...activosSeleccionados, activo]);
+      setActivosSeleccionados([...activosSeleccionados, activoConIdCorregido]);
       showSuccessNotification('Activo agregado correctamente.');
 
       setIsFechaFinEnabled(true);
@@ -423,7 +468,7 @@ const VerMantenimiento = () => {
         estado: mantenimiento.estado,
         fecha_fin: mantenimiento.fecha_fin,
         activos: activosValidos.map((activo) => ({
-          activo_id: activo.activo_id,
+          activo_id: activo.activo_id || activo.id,
           codigo: activo.codigo,
           nombre: activo.nombre,
           especificaciones: fusionarEspecificaciones(
