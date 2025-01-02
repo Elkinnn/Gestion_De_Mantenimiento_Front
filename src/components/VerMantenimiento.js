@@ -180,6 +180,7 @@ const VerMantenimiento = () => {
   const [isFechaFinEnabled, setIsFechaFinEnabled] = useState(false);
   const [fechaFinOriginal, setFechaFinOriginal] = useState('');
 
+  const [especificacionesTemporales, setEspecificacionesTemporales] = useState({});
 
   useEffect(() => {
     if (mantenimientoId) {
@@ -204,8 +205,14 @@ const VerMantenimiento = () => {
   const fetchMantenimientoData = async (id) => {
     try {
       const response = await api.get(`/mantenimientos/${id}`);
-      setMantenimiento(response.data);
-      setFechaFinOriginal(response.data.fecha_fin);
+
+      setMantenimiento({
+        ...response.data,
+        activosOriginales: response.data.activos || [], // Guardar los activos originales
+        estadoOriginal: response.data.estado, // Guardar el estado original
+      });
+
+      setFechaFinOriginal(response.data.fecha_fin); // Guardar la fecha original
 
       if (response.data.estado === 'Terminado') {
         setIsTerminadoFromDB(true);
@@ -218,99 +225,76 @@ const VerMantenimiento = () => {
     }
   };
 
+
   const handleViewEspecificaciones = async (activo) => {
     if (!activo) {
-        console.warn('Intentaste ver especificaciones sin seleccionar un activo.');
-        return;
+      console.warn('Intentaste ver especificaciones sin seleccionar un activo.');
+      return;
     }
 
-    console.log('Activo seleccionado:', activo); // Depuración
+    console.log('Activo seleccionado:', activo);
 
-    // Si el activo no tiene activo_id, es inválido
-    if (!activo.activo_id) {
-        console.error('El activo no tiene un activo_id válido.');
-        return;
-    }
+    // Limpia el estado del modal antes de cargar nuevas especificaciones
+    setActivoSeleccionado(null); // Limpia cualquier dato anterior
 
-    // Si el activo no tiene mantenimiento_activo_id, asociarlo al mantenimiento
-    if (!activo.mantenimiento_activo_id) {
-        console.log('El activo es nuevo. Asociándolo al mantenimiento en el backend.');
-        try {
-            const response = await api.post('/mantenimientos/activos', {
-                mantenimiento_id: mantenimiento.mantenimiento_id,
-                activo_id: activo.activo_id,
-                especificaciones: activo.especificaciones || {
-                    actividades_realizadas: [],
-                    componentes_utilizados: [],
-                    observaciones: '',
-                },
-            });
-
-            console.log('Activo asociado exitosamente:', response.data);
-            activo.mantenimiento_activo_id = response.data.mantenimiento_activo_id; // Actualiza con el nuevo ID
-
-            // Recuperar especificaciones desde el backend
-            const especificacionesResponse = await api.get('/mantenimientos/actividades-del-activo', {
-                params: {
-                    mantenimiento_id: mantenimiento.mantenimiento_id,
-                    activo_id: activo.activo_id,
-                },
-            });
-            console.log('Especificaciones obtenidas:', especificacionesResponse.data);
-
-            setActivoSeleccionado({
-                ...activo,
-                especificaciones: especificacionesResponse.data,
-            });
-        } catch (error) {
-            console.error('Error al asociar activo o cargar especificaciones:', error);
-            setActivoSeleccionado({
-                ...activo,
-                especificaciones: {
-                    actividades_realizadas: [],
-                    componentes_utilizados: [],
-                    observaciones: '',
-                },
-            });
-        } finally {
-            setIsModalOpen(true);
-        }
-        return;
-    }
-
-    // Activo ya tiene mantenimiento_activo_id, cargar especificaciones
     try {
-        const response = await api.get('mantenimientos/actividades-del-activo', {
-            params: {
-                mantenimiento_id: mantenimiento.mantenimiento_id,
-                activo_id: activo.activo_id,
-            },
+      // Verifica si el activo ya tiene asociado un mantenimiento_activo_id
+      if (!activo.mantenimiento_activo_id) {
+        console.log('El activo es nuevo. Asociándolo al mantenimiento en el backend.');
+        const response = await api.post('/mantenimientos/activos', {
+          mantenimiento_id: mantenimiento.mantenimiento_id,
+          activo_id: activo.activo_id,
+          especificaciones: activo.especificaciones || {
+            actividades_realizadas: [],
+            componentes_utilizados: [],
+            observaciones: '',
+          },
         });
-        console.log('Especificaciones obtenidas:', response.data);
 
-        setActivoSeleccionado({
-            ...activo,
-            especificaciones: response.data,
-        });
+        console.log('Activo asociado exitosamente:', response.data);
+        activo.mantenimiento_activo_id = response.data.mantenimiento_activo_id; // Actualiza el ID
+      }
+
+      // Recuperar especificaciones desde el backend
+      const especificacionesResponse = await api.get('/mantenimientos/actividades-del-activo', {
+        params: {
+          mantenimiento_id: mantenimiento.mantenimiento_id,
+          activo_id: activo.activo_id,
+        },
+      });
+
+      console.log('Especificaciones obtenidas:', especificacionesResponse.data);
+
+      // Actualiza el estado del activo seleccionado con las especificaciones
+      setActivoSeleccionado({
+        ...activo,
+        especificaciones: especificacionesResponse.data,
+      });
+
+      setIsModalOpen(true); // Abre el modal después de cargar los datos
     } catch (error) {
-        console.error('Error al cargar especificaciones:', error);
-        setActivoSeleccionado({
-            ...activo,
-            especificaciones: {
-                actividades_realizadas: [],
-                componentes_utilizados: [],
-                observaciones: '',
-            },
-        });
-    } finally {
-        setIsModalOpen(true);
-    }
-};
+      console.error('Error al cargar especificaciones:', error);
 
-  
-  
-  
-  
+      // Maneja errores y muestra un modal vacío
+      setActivoSeleccionado({
+        ...activo,
+        especificaciones: {
+          actividades_realizadas: [],
+          componentes_utilizados: [],
+          observaciones: '',
+        },
+      });
+
+      setIsModalOpen(true); // Abre el modal con especificaciones vacías
+    }
+  };
+
+
+
+
+
+
+
 
 
   if (isLoading) {
@@ -326,7 +310,7 @@ const VerMantenimiento = () => {
     setIsAgregarActivoModalOpen(false);
   };
 
-  const handleAgregarActivo = (activo) => {
+  const handleAgregarActivo = async (activo) => {
     console.log('Activo seleccionado:', activo);
     if (!activo.id) {
       console.error('El activo seleccionado no tiene un ID.');
@@ -336,6 +320,23 @@ const VerMantenimiento = () => {
       ...activo,
       activo_id: activo.id, // Mapea id a activo_id
     };
+
+
+    try {
+      // Asociar el activo al mantenimiento en el backend
+      const response = await api.post('/mantenimientos/activos', {
+        mantenimiento_id: mantenimiento.mantenimiento_id,
+        activo_id: activoConIdCorregido.activo_id,
+      });
+
+      // Agregar el mantenimiento_activo_id del backend al activo corregido
+      activoConIdCorregido.mantenimiento_activo_id = response.data.mantenimiento_activo_id;
+    } catch (error) {
+      console.error('Error al asociar activo al mantenimiento:', error);
+      showErrorNotification('Error al asociar el activo. Intente nuevamente.');
+      return; // No continuar si la asociación falla
+    }
+
     // Combina activos del mantenimiento original y los seleccionados
     const activosTotales = [...(mantenimiento.activos || []), ...activosSeleccionados];
 
@@ -346,9 +347,15 @@ const VerMantenimiento = () => {
     if (existe) {
       showInfoNotification('El activo ya está agregado.');
     } else {
-      setActivosSeleccionados([...activosSeleccionados, activoConIdCorregido]);
-      showSuccessNotification('Activo agregado correctamente.');
+      setMantenimiento((prev) => ({
+        ...prev,
+        activos: [
+          ...(prev.activos || []),
+          activoConIdCorregido, // Incluye el nuevo activo con el mantenimiento_activo_id
+        ],
+      }));
 
+      showSuccessNotification('Activo agregado correctamente.');
       setIsFechaFinEnabled(true);
     }
 
@@ -393,29 +400,43 @@ const VerMantenimiento = () => {
   };
 
 
-  
+
   const handleGuardarMantenimiento = async () => {
     try {
+      const huboCambiosEnActivos =
+        JSON.stringify(mantenimiento.activos) !== JSON.stringify(mantenimiento.activosOriginales);
+
+      // Detectar cambios en estado y fecha de fin
+      const huboCambiosEnEstado = mantenimiento.estado !== mantenimiento.estadoOriginal;
+      const huboCambiosEnFecha = mantenimiento.fecha_fin !== fechaFinOriginal;
+
+      // Comprobar si hubo algún cambio
+      const huboCambios = huboCambiosEnActivos || huboCambiosEnEstado || huboCambiosEnFecha;
+
+      if (!huboCambios) {
+        showInfoNotification("No se han realizado cambios en el mantenimiento.");
+        return;
+      }
       // Validar que los datos requeridos estén presentes
       if (!mantenimiento.estado || !mantenimiento.fecha_fin) {
         showErrorNotification('El estado y la fecha de fin son obligatorios.');
         return;
       }
-  
+
       // Combinar activos seleccionados con los del mantenimiento existente
       const activosFinales = [...(mantenimiento.activos || []), ...activosSeleccionados];
       if (!activosFinales.length) {
         showErrorNotification('Debe agregar al menos un activo.');
         return;
       }
-  
+
       // Dividir activos en existentes y nuevos
       const activosExistentes = activosFinales.filter((activo) => activo.activo_id);
       const activosNuevos = activosFinales.filter((activo) => !activo.activo_id);
-  
+
       console.log('Activos existentes:', activosExistentes);
       console.log('Activos nuevos:', activosNuevos);
-  
+
       // Procesar activos nuevos
       const nuevosActivosProcesados = await Promise.all(
         activosNuevos.map(async (activo) => {
@@ -425,7 +446,7 @@ const VerMantenimiento = () => {
                 `El activo con código ${activo.codigo || 'desconocido'} tiene información incompleta.`
               );
             }
-  
+
             const response = await api.post('/mantenimientos/activos', {
               mantenimiento_id: mantenimiento.mantenimiento_id,
               codigo: activo.codigo,
@@ -435,7 +456,7 @@ const VerMantenimiento = () => {
               ubicacion_id: activo.ubicacion_id || null,
               proveedor_id: activo.proveedor_id || null,
             });
-  
+
             console.log('Activo nuevo procesado:', response.data);
             return {
               ...activo,
@@ -450,17 +471,17 @@ const VerMantenimiento = () => {
           }
         })
       );
-  
+
       // Filtrar activos válidos
       const nuevosActivosValidos = nuevosActivosProcesados.filter((activo) => activo !== null);
-  
+
       // Validación final
       const activosValidos = [...activosExistentes, ...nuevosActivosValidos];
       if (!activosValidos.length) {
         showErrorNotification('No se pudieron procesar los activos seleccionados. Verifique los datos.');
         return;
       }
-  
+
       // Mantener y fusionar especificaciones existentes con las nuevas
       const fusionarEspecificaciones = (existentes, nuevas) => {
         const actividades = [
@@ -474,7 +495,7 @@ const VerMantenimiento = () => {
         const observaciones = nuevas?.observaciones || existentes?.observaciones || '';
         return { actividades, componentes, observaciones };
       };
-  
+
       // Preparar el payload para enviar al backend
       const payload = {
         estado: mantenimiento.estado,
@@ -489,12 +510,12 @@ const VerMantenimiento = () => {
           ),
         })),
       };
-  
+
       console.log('Payload que se envía al backend:', JSON.stringify(payload, null, 2));
-  
+
       // Llamar al backend para actualizar el mantenimiento
       const response = await api.put(`/mantenimientos/${mantenimiento.mantenimiento_id}`, payload);
-  
+
       if (response.status === 200) {
         showSuccessNotification('Mantenimiento guardado correctamente.');
         setMantenimiento(response.data); // Actualizar el estado con los datos más recientes
@@ -506,9 +527,9 @@ const VerMantenimiento = () => {
       showErrorNotification('Error al guardar el mantenimiento. Por favor, inténtelo de nuevo.');
     }
   };
-  
 
-  
+
+
 
 
 
@@ -548,18 +569,17 @@ const VerMantenimiento = () => {
 
 
   const handleGuardarEspecificaciones = (activo, especificaciones) => {
+    setEspecificacionesTemporales((prev) => ({
+      ...prev,
+      [activo.codigo]: especificaciones,
+    }));
+
     setMantenimiento((prev) => ({
       ...prev,
       activos: prev.activos.map((a) =>
         a.codigo === activo.codigo ? { ...a, especificaciones } : a
       ),
     }));
-
-    setActivosSeleccionados((prev) =>
-      prev.map((a) =>
-        a.codigo === activo.codigo ? { ...a, especificaciones } : a
-      )
-    );
   };
 
 
@@ -734,6 +754,8 @@ const VerMantenimiento = () => {
         mantenimientoId={mantenimiento?.mantenimiento_id}
         onGuardarEspecificaciones={handleGuardarEspecificaciones}
         isTerminadoFromDB={isTerminadoFromDB}
+        especificacionesTemporales={especificacionesTemporales} // Pasa el estado
+        setEspecificacionesTemporales={setEspecificacionesTemporales}
       />
     </>
   );
