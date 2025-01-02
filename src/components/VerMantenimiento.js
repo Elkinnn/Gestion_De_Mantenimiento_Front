@@ -321,6 +321,21 @@ const VerMantenimiento = () => {
       activo_id: activo.id, // Mapea id a activo_id
     };
 
+    try {
+      // Verificar si el activo ya está en mantenimiento activo
+      const verificarResponse = await api.get(`/mantenimientos/activos/${activoConIdCorregido.activo_id}/verificar`);
+      const { enMantenimiento, mensaje } = verificarResponse.data;
+    
+      if (enMantenimiento) {
+        // Si el activo ya está en mantenimiento, mostrar mensaje y detener el flujo
+        showInfoNotification(mensaje);
+        return;
+      }
+    } catch (error) {
+      console.error('Error al verificar si el activo está en mantenimiento activo:', error);
+      showErrorNotification('Error al verificar el estado del activo. Intente nuevamente.');
+      return;
+    }    
 
     try {
       // Asociar el activo al mantenimiento en el backend

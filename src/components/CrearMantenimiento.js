@@ -379,7 +379,7 @@ const CrearMantenimiento = () => {
         }
     };
 
-    const handleAgregarActivo = (activo) => {
+    const handleAgregarActivo = async (activo) => {
         const nuevoActivo = {
             id: activo.id || null,
             procesoCompra: activo.procesoCompra || activo.proceso_compra || 'No especificado',
@@ -399,6 +399,21 @@ const CrearMantenimiento = () => {
             showInfoNotification('El activo seleccionado debe tener un tipo válido.');
             return;
         }
+
+        try {
+            const response = await api.get(`/mantenimientos/activos/${nuevoActivo.id}/verificar`);
+            const { enMantenimiento, mensaje } = response.data;
+          
+            if (enMantenimiento) {
+              showInfoNotification(mensaje);
+              return; // Detener el flujo si el activo ya está en mantenimiento
+            }
+          } catch (error) {
+            console.error('Error al verificar si el activo está en mantenimiento:', error);
+            showErrorNotification('Error al verificar el estado del activo. Intente nuevamente.');
+            return; // Detener el flujo si ocurre un error
+          }
+          
 
         if (!activosSeleccionados.find((a) => a.codigo === nuevoActivo.codigo)) {
             setActivosSeleccionados([...activosSeleccionados, nuevoActivo]);
