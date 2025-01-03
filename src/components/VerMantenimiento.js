@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useLocation } from 'react-router-dom';
 import Navbar from './Navbar';
+import BackButton from './BackButton';
 import EspecificacionesModalNuevo from './EspecificacionesModalNuevo';
 import { showSuccessNotification, showErrorNotification, showInfoNotification } from './Notification';
 
@@ -607,6 +608,7 @@ const VerMantenimiento = () => {
   return (
     <>
       <Navbar title="Detalles del Mantenimiento" />
+      <BackButton />
       <Container>
         <FormWrapper>
           <Title>Detalles del Mantenimiento</Title>
