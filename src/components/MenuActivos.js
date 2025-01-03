@@ -6,8 +6,6 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import { useNavigate } from 'react-router-dom';
 import { showInfoNotification } from './Notification';
-import FiltroComponent from './FiltroComponent';
-import LimpiarComponent from './LimpiarComponent';
 
 const Container = styled.div`
   display: flex;
@@ -23,22 +21,6 @@ const Container = styled.div`
   overflow-y: auto;
   min-height: 100vh;
   padding-bottom: 60px;
-`;
-
-const FilterContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  justify-content: flex-start;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-`;
-
-const FilterLabel = styled.span`
-  font-size: 16px;
-  font-weight: bold;
-  margin-right: 10px;
-  white-space: nowrap;
 `;
 
 const TableWrapper = styled.div`
@@ -117,17 +99,10 @@ const Button = styled.button`
 
 const MenuActivos = () => {
   const [activos, setActivos] = useState([]);
-  const [filteredActivos, setFilteredActivos] = useState([]);
   const [error, setError] = useState(null);
   const [selectedActivo, setSelectedActivo] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [role] = useState(localStorage.getItem('role'));
-  const [filtros, setFiltros] = useState({
-    proceso_compra: '',
-    proveedor: '',
-    tipo: '',
-    estado: '',
-  });
+  const [role] = useState(localStorage.getItem('role')); // Obtiene el rol del usuario
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -136,7 +111,6 @@ const MenuActivos = () => {
         const response = await api.get('/activos/menu');
         console.log('Datos recibidos:', response.data);
         setActivos(response.data);
-        setFilteredActivos(response.data);
       } catch (err) {
         setError('Error al cargar los activos');
       }
@@ -145,44 +119,11 @@ const MenuActivos = () => {
     fetchActivos();
   }, []);
 
-  useEffect(() => {
-    // Filtrar activos según los filtros seleccionados
-    const filtered = activos.filter((activo) => {
-      return (
-        (filtros.proceso_compra === '' || activo.proceso_compra.includes(filtros.proceso_compra)) &&
-        (filtros.proveedor === '' || activo.proveedor === filtros.proveedor) &&
-        (filtros.tipo === '' || activo.tipo === filtros.tipo) &&
-        (filtros.estado === '' || activo.estado === filtros.estado)
-      );
-    });
-    setFilteredActivos(filtered);
-  }, [filtros, activos]);
-
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
   const handleRowClick = (activoId) => {
-    setSelectedActivo((prevSelected) => (prevSelected === activoId ? null : activoId));
-  };
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFiltros((prevFiltros) => ({
-      ...prevFiltros,
-      [name]: value,
-    }));
-  };
-
-  const handleClear = () => {
-    setFiltros({
-      proceso_compra: '',
-      proveedor: '',
-      tipo: '',
-      estado: '',
-    });
-  };
-
     setSelectedActivo((prevSelected) => {
       const newSelected = prevSelected === activoId ? null : activoId;
       console.log(`Activo seleccionado: ${newSelected}`);
@@ -203,19 +144,13 @@ const MenuActivos = () => {
         <TableTitle>Activos Registrados</TableTitle>
         {error && <p style={{ color: 'red' }}>{error}</p>}
 
-        <FilterContainer>
-          <FilterLabel>Filtrar por:</FilterLabel>
-          <FiltroComponent filtros={filtros} handleFilterChange={handleFilterChange} />
-          <LimpiarComponent handleClear={handleClear} />
-        </FilterContainer>
-
         <TableWrapper>
           <Table>
             <thead>
               <tr>
                 <TableHeader>Proceso de Compra</TableHeader>
                 <TableHeader>Código</TableHeader>
-                <TableHeader>Serie</TableHeader>
+                <TableHeader>Nombre</TableHeader>
                 <TableHeader>Estado</TableHeader>
                 <TableHeader>Ubicación</TableHeader>
                 <TableHeader>Tipo</TableHeader>
@@ -223,8 +158,8 @@ const MenuActivos = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredActivos.length > 0 ? (
-                filteredActivos.map((activo, index) => (
+              {Array.isArray(activos) && activos.length > 0 ? (
+                activos.map((activo, index) => (
                   <TableRow
                     key={activo.id}
                     $isEven={index % 2 === 0}
@@ -272,5 +207,6 @@ const MenuActivos = () => {
       <Footer />
     </>
   );
+};
 
 export default MenuActivos;
