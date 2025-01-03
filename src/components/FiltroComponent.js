@@ -45,7 +45,7 @@ const FiltroComponent = ({ filtros, handleFilterChange }) => {
         onChange={handleFilterChange}
       >
         <option value="">Proveedor</option>
-        {['Tech Solutions S.A.', 'InnovaCom S.A.', 'ElectroProveedores S.A.', 'Global Tech Ltda.', 'SmartDevices S.A.'].map((option) => (
+        {['TechSupplier S.A.', 'RedNetworks Ltd.', 'AudioVisual Pro', 'SecureTech Inc.', 'DataStorage Co.'].map((option) => (
           <option key={option} value={option}>
             {option}
           </option>
@@ -58,7 +58,7 @@ const FiltroComponent = ({ filtros, handleFilterChange }) => {
         onChange={handleFilterChange}
       >
         <option value="">Tipo</option>
-        {['Mouse', 'Teclado', 'Monitor', 'CPU'].map((option) => (
+        {['Computadora de Escritorio', 'Laptop', 'Servidor', 'Mouse', 'Teclado', 'Escáner', 'Impresora', 'Router', 'Switch', 'Punto de Acceso', 'Proyector', 'Altavoces', 'Micrófono', 'Cámara de Seguridad', 'Sensor de Movimiento', 'Sistema de Alarma',].map((option) => (
           <option key={option} value={option}>
             {option}
           </option>

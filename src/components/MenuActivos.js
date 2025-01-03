@@ -6,6 +6,8 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import { useNavigate } from 'react-router-dom';
 import { showInfoNotification } from './Notification';
+import FiltroComponent from './FiltroComponent';
+import LimpiarComponent from './LimpiarComponent';
 
 const Container = styled.div`
   display: flex;
@@ -97,12 +99,46 @@ const Button = styled.button`
   }
 `;
 
+// Estilos mejorados para los filtros
+const FiltersWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+  padding: 10px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ddd;
+`;
+
+const FilterLabel = styled.label`
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-right: 10px;
+`;
+
+const LimpiarWrapper = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
 const MenuActivos = () => {
   const [activos, setActivos] = useState([]);
   const [error, setError] = useState(null);
   const [selectedActivo, setSelectedActivo] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [role] = useState(localStorage.getItem('role')); // Obtiene el rol del usuario
+  const [filtros, setFiltros] = useState({
+    proceso_compra: '',
+    proveedor: '',
+    tipo: '',
+    estado: '',
+  });
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -131,6 +167,32 @@ const MenuActivos = () => {
     });
   };
 
+  const handleFilterChange = (event) => {
+    const { name, value } = event.target;
+    setFiltros((prevFiltros) => ({
+      ...prevFiltros,
+      [name]: value,
+    }));
+  };
+
+  const handleClear = () => {
+    setFiltros({
+      proceso_compra: '',
+      proveedor: '',
+      tipo: '',
+      estado: '',
+    });
+  };
+
+  const filteredActivos = activos.filter((activo) => {
+    return (
+      (filtros.proceso_compra === '' || activo.proceso_compra.includes(filtros.proceso_compra)) &&
+      (filtros.proveedor === '' || activo.proveedor === filtros.proveedor) &&
+      (filtros.tipo === '' || activo.tipo === filtros.tipo) &&
+      (filtros.estado === '' || activo.estado === filtros.estado)
+    );
+  });
+
   return (
     <>
       <Sidebar
@@ -142,6 +204,15 @@ const MenuActivos = () => {
       <Navbar title="Menú de Activos" />
       <Container $sidebarOpen={sidebarOpen}>
         <TableTitle>Activos Registrados</TableTitle>
+
+        <FiltersWrapper>
+          <FilterLabel>Filtrar por:</FilterLabel>
+          <FiltroComponent filtros={filtros} handleFilterChange={handleFilterChange} />
+          <LimpiarWrapper>
+            <LimpiarComponent handleClear={handleClear} />
+          </LimpiarWrapper>
+        </FiltersWrapper>
+
         {error && <p style={{ color: 'red' }}>{error}</p>}
 
         <TableWrapper>
@@ -150,7 +221,7 @@ const MenuActivos = () => {
               <tr>
                 <TableHeader>Proceso de Compra</TableHeader>
                 <TableHeader>Código</TableHeader>
-                <TableHeader>Nombre</TableHeader>
+                <TableHeader>Serie</TableHeader>
                 <TableHeader>Estado</TableHeader>
                 <TableHeader>Ubicación</TableHeader>
                 <TableHeader>Tipo</TableHeader>
@@ -158,13 +229,13 @@ const MenuActivos = () => {
               </tr>
             </thead>
             <tbody>
-              {Array.isArray(activos) && activos.length > 0 ? (
-                activos.map((activo, index) => (
+              {filteredActivos.length > 0 ? (
+                filteredActivos.map((activo, index) => (
                   <TableRow
                     key={activo.id}
                     $isEven={index % 2 === 0}
                     $selected={selectedActivo === activo.id}
-                    onClick={role !== 'Tecnico' ? () => handleRowClick(activo.id) : undefined} // Deshabilitar clic para Técnicos
+                    onClick={role !== 'Tecnico' ? () => handleRowClick(activo.id) : undefined}
                   >
                     <TableData>{activo.proceso_compra}</TableData>
                     <TableData>{activo.codigo}</TableData>
@@ -195,7 +266,7 @@ const MenuActivos = () => {
                 showInfoNotification('Debes seleccionar un activo para generar el reporte.');
               } else {
                 console.log(`Activo seleccionado: ${selectedActivo}`);
-                navigate(`/vermantenimiento${selectedActivo}`); // Redirige a la ruta de NuevoMantenimiento
+                navigate(`/verActivo${selectedActivo}`); // Redirige a la ruta de NuevoMantenimiento
               }
             }}
           >
@@ -203,7 +274,7 @@ const MenuActivos = () => {
           </Button>
         )}
       </Container>
-
+      
       <Footer />
     </>
   );
