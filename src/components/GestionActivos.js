@@ -93,7 +93,7 @@ const GestionActivo = () => {
             window.location.href = '/activos/crear';
         } else {
             // Redirigir a la página correspondiente
-            window.location.href = '/activos/cargar-lote';
+            window.location.href = '/activos/lotes';
         }
     };
 
