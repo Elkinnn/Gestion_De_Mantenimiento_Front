@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import { useNavigate } from 'react-router-dom';
 import { showInfoNotification } from './Notification';
 import FiltroComponent from './FiltroComponent';
 import LimpiarComponent from './LimpiarComponent';
@@ -127,11 +128,13 @@ const MenuActivos = () => {
     tipo: '',
     estado: '',
   });
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchActivos = async () => {
       try {
         const response = await api.get('/activos/menu');
+        console.log('Datos recibidos:', response.data);
         setActivos(response.data);
         setFilteredActivos(response.data);
       } catch (err) {
@@ -180,9 +183,21 @@ const MenuActivos = () => {
     });
   };
 
+    setSelectedActivo((prevSelected) => {
+      const newSelected = prevSelected === activoId ? null : activoId;
+      console.log(`Activo seleccionado: ${newSelected}`);
+      return newSelected;
+    });
+  };
+
   return (
     <>
-      <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} selectedActivo={selectedActivo} role={role} />
+      <Sidebar
+        open={sidebarOpen}
+        toggleSidebar={toggleSidebar}
+        selectedActivo={selectedActivo}
+        currentMenu="activos"
+      />
       <Navbar title="Menú de Activos" />
       <Container $sidebarOpen={sidebarOpen}>
         <TableTitle>Activos Registrados</TableTitle>
@@ -214,7 +229,7 @@ const MenuActivos = () => {
                     key={activo.id}
                     $isEven={index % 2 === 0}
                     $selected={selectedActivo === activo.id}
-                    onClick={() => handleRowClick(activo.id)}
+                    onClick={role !== 'Tecnico' ? () => handleRowClick(activo.id) : undefined} // Deshabilitar clic para Técnicos
                   >
                     <TableData>{activo.proceso_compra}</TableData>
                     <TableData>{activo.codigo}</TableData>
@@ -233,16 +248,19 @@ const MenuActivos = () => {
                 </tr>
               )}
             </tbody>
+
           </Table>
         </TableWrapper>
 
-        {role !== 'Tecnico' && (
+        {/* Ocultar botón de reporte para técnicos */}
+        {role === 'Admin' && (
           <Button
             onClick={() => {
               if (!selectedActivo) {
                 showInfoNotification('Debes seleccionar un activo para generar el reporte.');
               } else {
-                window.location.href = `/reporte/${selectedActivo}`;
+                console.log(`Activo seleccionado: ${selectedActivo}`);
+                navigate(`/vermantenimiento${selectedActivo}`); // Redirige a la ruta de NuevoMantenimiento
               }
             }}
           >
@@ -254,6 +272,5 @@ const MenuActivos = () => {
       <Footer />
     </>
   );
-};
 
 export default MenuActivos;
