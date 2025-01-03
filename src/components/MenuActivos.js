@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/api';
 import styled from 'styled-components';
-import Sidebar from './Sidebar'; // Importamos Sidebar
-import Navbar from './Navbar';  // Importamos el Navbar
-import Footer from './Footer';  // Importamos el Footer
+import Sidebar from './Sidebar';
+import Navbar from './Navbar';
+import Footer from './Footer';
 import { showInfoNotification } from './Notification';
+import FiltroComponent from './FiltroComponent';
+import LimpiarComponent from './LimpiarComponent';
 
 const Container = styled.div`
   display: flex;
@@ -18,8 +20,24 @@ const Container = styled.div`
   z-index: 1;
   transition: margin-left 0.3s ease;
   overflow-y: auto;
-  min-height: 100vh; /* Asegura que el contenedor ocupe toda la altura de la pantalla */
-  padding-bottom: 60px; /* Espacio para el footer */
+  min-height: 100vh;
+  padding-bottom: 60px;
+`;
+
+const FilterContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-start;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+`;
+
+const FilterLabel = styled.span`
+  font-size: 16px;
+  font-weight: bold;
+  margin-right: 10px;
+  white-space: nowrap;
 `;
 
 const TableWrapper = styled.div`
@@ -39,7 +57,7 @@ const TableTitle = styled.h2`
   font-weight: 600;
   color: #343a40;
   margin-bottom: 20px;
-  text-align: center;  /* Agregar esta línea para centrar el texto */
+  text-align: center;
 `;
 
 const Table = styled.table`
@@ -98,17 +116,24 @@ const Button = styled.button`
 
 const MenuActivos = () => {
   const [activos, setActivos] = useState([]);
+  const [filteredActivos, setFilteredActivos] = useState([]);
   const [error, setError] = useState(null);
-  const [selectedActivo, setSelectedActivo] = useState(null); // Solo un activo seleccionado
+  const [selectedActivo, setSelectedActivo] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [role] = useState(localStorage.getItem('role'));
+  const [filtros, setFiltros] = useState({
+    proceso_compra: '',
+    proveedor: '',
+    tipo: '',
+    estado: '',
+  });
 
   useEffect(() => {
     const fetchActivos = async () => {
       try {
         const response = await api.get('/activos/menu');
-        console.log('Datos recibidos:', response.data); // Verifica la estructura de los datos
         setActivos(response.data);
+        setFilteredActivos(response.data);
       } catch (err) {
         setError('Error al cargar los activos');
       }
@@ -117,20 +142,43 @@ const MenuActivos = () => {
     fetchActivos();
   }, []);
 
+  useEffect(() => {
+    // Filtrar activos según los filtros seleccionados
+    const filtered = activos.filter((activo) => {
+      return (
+        (filtros.proceso_compra === '' || activo.proceso_compra.includes(filtros.proceso_compra)) &&
+        (filtros.proveedor === '' || activo.proveedor === filtros.proveedor) &&
+        (filtros.tipo === '' || activo.tipo === filtros.tipo) &&
+        (filtros.estado === '' || activo.estado === filtros.estado)
+      );
+    });
+    setFilteredActivos(filtered);
+  }, [filtros, activos]);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
   const handleRowClick = (activoId) => {
-    // Si el mismo activo ya está seleccionado, lo deseleccionamos, de lo contrario, lo seleccionamos
-    setSelectedActivo((prevSelected) => {
-      const newSelected = prevSelected === activoId ? null : activoId;
-      console.log(`Activo seleccionado: ${newSelected}`); // Imprime el ID del activo seleccionado
-      return newSelected;
-    });
+    setSelectedActivo((prevSelected) => (prevSelected === activoId ? null : activoId));
   };
 
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFiltros((prevFiltros) => ({
+      ...prevFiltros,
+      [name]: value,
+    }));
+  };
+
+  const handleClear = () => {
+    setFiltros({
+      proceso_compra: '',
+      proveedor: '',
+      tipo: '',
+      estado: '',
+    });
+  };
 
   return (
     <>
@@ -140,13 +188,19 @@ const MenuActivos = () => {
         <TableTitle>Activos Registrados</TableTitle>
         {error && <p style={{ color: 'red' }}>{error}</p>}
 
+        <FilterContainer>
+          <FilterLabel>Filtrar por:</FilterLabel>
+          <FiltroComponent filtros={filtros} handleFilterChange={handleFilterChange} />
+          <LimpiarComponent handleClear={handleClear} />
+        </FilterContainer>
+
         <TableWrapper>
           <Table>
             <thead>
               <tr>
                 <TableHeader>Proceso de Compra</TableHeader>
                 <TableHeader>Código</TableHeader>
-                <TableHeader>Nombre</TableHeader>
+                <TableHeader>Serie</TableHeader>
                 <TableHeader>Estado</TableHeader>
                 <TableHeader>Ubicación</TableHeader>
                 <TableHeader>Tipo</TableHeader>
@@ -154,13 +208,13 @@ const MenuActivos = () => {
               </tr>
             </thead>
             <tbody>
-              {Array.isArray(activos) && activos.length > 0 ? (
-                activos.map((activo, index) => (
+              {filteredActivos.length > 0 ? (
+                filteredActivos.map((activo, index) => (
                   <TableRow
-                    key={activo.id} // La clave debe ser única, usamos el id de cada activo
+                    key={activo.id}
                     $isEven={index % 2 === 0}
                     $selected={selectedActivo === activo.id}
-                    onClick={() => handleRowClick(activo.id)} // Solo pasamos el id
+                    onClick={() => handleRowClick(activo.id)}
                   >
                     <TableData>{activo.proceso_compra}</TableData>
                     <TableData>{activo.codigo}</TableData>
@@ -188,7 +242,6 @@ const MenuActivos = () => {
               if (!selectedActivo) {
                 showInfoNotification('Debes seleccionar un activo para generar el reporte.');
               } else {
-                console.log(`Generando reporte para el activo con ID: ${selectedActivo}`);
                 window.location.href = `/reporte/${selectedActivo}`;
               }
             }}
