@@ -2,16 +2,17 @@ import React from 'react';
 import styled from 'styled-components';
 
 const ClearButton = styled.button`
-  padding: 10px 20px;
+  padding: 8px 15px;
   background-color: #007bff;
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   font-size: 14px;
   cursor: pointer;
+  flex: none;
 
   &:hover {
-    background-color: #007bff;
+    background-color: #0056b3;
   }
 `;
 
