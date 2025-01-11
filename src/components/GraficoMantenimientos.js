@@ -75,10 +75,11 @@ const GraficoMantenimientos = () => {
     const [fechaInicio, setFechaInicio] = useState("");
     const [fechaFin, setFechaFin] = useState("");
     const [tipoMantenimiento, setTipoMantenimiento] = useState("");
+    const [mostrarTodos, setMostrarTodos] = useState(true); // Estado para mantener la gráfica inicial
 
     // Función para obtener datos de la API
     const fetchData = () => {
-        // Si solo se ha ingresado la fecha de inicio, no actualiza la gráfica
+        // Si solo se ha ingresado la fecha de inicio, no actualiza la gráfica (se mantiene igual)
         if (fechaInicio && !fechaFin) {
             return;
         }
@@ -89,6 +90,8 @@ const GraficoMantenimientos = () => {
             setFechaFin(""); // Borra la fecha fin si es incorrecta
             return;
         }
+
+        setMostrarTodos(!fechaInicio && !fechaFin); // Si no hay filtros, se muestra todo
 
         api.get("/reportes/mantenimientos-por-periodo", {
             params: { fechaInicio, fechaFin, tipoMantenimiento }
@@ -110,6 +113,7 @@ const GraficoMantenimientos = () => {
         setFechaInicio("");
         setFechaFin("");
         setTipoMantenimiento("");
+        setMostrarTodos(true);
         fetchData();
     };
 
@@ -137,8 +141,8 @@ const GraficoMantenimientos = () => {
                 <Button onClick={limpiarFiltros}>Limpiar</Button>
             </Filters>
 
-            {/* La gráfica solo se muestra si NO hay fecha de inicio o si hay ambas fechas */}
-            {(datos.length > 0 && (!fechaInicio || (fechaInicio && fechaFin))) && (
+            {/* La gráfica solo se actualiza cuando se ingresan AMBAS fechas, pero siempre se muestra sin filtros */}
+            {(mostrarTodos || (fechaInicio && fechaFin)) && datos.length > 0 && (
                 <ChartWrapper>
                     <Line
                         data={{
