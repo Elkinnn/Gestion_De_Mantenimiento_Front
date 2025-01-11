@@ -53,6 +53,8 @@ const Select = styled.select`
   border-radius: 5px;
   border: 1px solid #ccc;
   font-size: 14px;
+  background: ${(props) => (props.disabled ? "#f0f0f0" : "white")}; /* Cambio de color cuando está bloqueado */
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
 `;
 
 const Button = styled.button`
@@ -76,6 +78,9 @@ const GraficoMantenimientos = () => {
     const [fechaFin, setFechaFin] = useState("");
     const [tipoMantenimiento, setTipoMantenimiento] = useState("");
     const [mostrarTodos, setMostrarTodos] = useState(true); // Estado para mantener la gráfica inicial
+
+    // Determinar si el select de Tipo de Mantenimiento debe estar bloqueado
+    const selectDeshabilitado = fechaInicio && !fechaFin;
 
     // Función para obtener datos de la API
     const fetchData = () => {
@@ -133,7 +138,11 @@ const GraficoMantenimientos = () => {
                     onChange={(e) => setFechaFin(e.target.value)}
                     placeholder="Fecha Fin"
                 />
-                <Select value={tipoMantenimiento} onChange={(e) => setTipoMantenimiento(e.target.value)}>
+                <Select
+                    value={tipoMantenimiento}
+                    onChange={(e) => setTipoMantenimiento(e.target.value)}
+                    disabled={selectDeshabilitado} // Se bloquea si solo hay fecha inicio
+                >
                     <option value="">Tipo de Mantenimiento</option>
                     <option value="Interno">Interno</option>
                     <option value="Externo">Externo</option>
