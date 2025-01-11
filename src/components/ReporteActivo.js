@@ -4,6 +4,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import { useNavigate, useParams } from 'react-router-dom';
 import { showInfoNotification } from './Notification';
+import ModalReporteActivo from './ModalReporteActivo';  // ✅ Importa el nuevo modal
 import api from '../api/api';
 
 const Container = styled.div`
@@ -149,6 +150,24 @@ const ReporteActivo = () => {
   const [tecnicos, setTecnicos] = useState([]);
   const [proveedorSeleccionado, setProveedorSeleccionado] = useState('');
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedMantenimientoId, setSelectedMantenimientoId] = useState(null);
+  const [selectedActivoId, setSelectedActivoId] = useState(null);
+
+  const handleOpenModal = (mantenimientoId, activoId) => {
+    console.log("📡 Abriendo modal con:", { mantenimientoId, activoId });
+    setSelectedMantenimientoId(mantenimientoId);
+    setSelectedActivoId(activoId);
+    setModalOpen(true);
+  };
+
+
+
+  const handleCloseModal = () => {
+    setModalOpen(false); // Cierra el modal
+    setSelectedMantenimientoId(null); // Limpia el ID seleccionado
+  };
+
 
   const handleFechaInicioChange = (e) => {
     const nuevaFechaInicio = e.target.value;
@@ -204,26 +223,24 @@ const ReporteActivo = () => {
       let query = `/mantenimientos/activo/${id}`;
       const params = {};
 
-      // 🔹 Convertir fechas a formato YYYY-MM-DD antes de enviarlas
       if (fechaInicio && fechaFin) {
         params.fechaInicio = new Date(fechaInicio).toISOString().split('T')[0];
         params.fechaFin = new Date(fechaFin).toISOString().split('T')[0];
       }
 
-      // 🔹 Filtrar por proveedor (Enviamos el ID del proveedor)
       if (proveedorSeleccionado && !tecnicoSeleccionado) {
-        params.proveedor = proveedorSeleccionado; // Ahora enviamos el ID del proveedor
+        params.proveedor = proveedorSeleccionado;
       }
 
-      // 🔹 Filtrar por técnico (Enviamos el ID del técnico)
       if (tecnicoSeleccionado && !proveedorSeleccionado) {
-        params.tecnico = tecnicoSeleccionado; // Ahora enviamos el ID del técnico
+        params.tecnico = tecnicoSeleccionado;
       }
 
       console.log("📡 Enviando filtros a la API:", params);
 
       const response = await api.get(query, { params });
-      console.log("✅ Respuesta de la API:", response.data);
+
+      console.log("✅ Respuesta completa de la API:", response.data);
 
       if (response.data) {
         setNombreActivo(response.data.nombre || 'Desconocido');
@@ -244,6 +261,7 @@ const ReporteActivo = () => {
       setMantenimientos([]);
     }
   };
+
 
 
   useEffect(() => {
@@ -348,17 +366,17 @@ const ReporteActivo = () => {
               type="date"
               value={fechaInicio ? new Date(fechaInicio).toISOString().split('T')[0] : ''}
               onChange={handleFechaInicioChange} // Aquí debe estar asignada la función correctamente
-              style={{ 
+              style={{
                 width: "170px",  // 🔹 Reduce el ancho del filtro
                 height: "23px",  // 🔹 Reduce la altura del filtro
                 padding: "5px 10px",  // 🔹 Ajusta el espacio interno para que se vea bien
-                borderRadius: "8px", 
-                border: "1px solid #ccc", 
-                backgroundColor: "#f9f9f9", 
-                fontSize: "14px",  
+                borderRadius: "8px",
+                border: "1px solid #ccc",
+                backgroundColor: "#f9f9f9",
+                fontSize: "14px",
                 textAlign: "center"
               }}
-              
+
             />
 
             {/* 🔹 FILTRO DE FECHA DE FIN */}
@@ -366,14 +384,14 @@ const ReporteActivo = () => {
               type="date"
               value={fechaFin ? new Date(fechaFin).toISOString().split('T')[0] : ''}
               onChange={handleFechaFinChange} // Aquí debe estar asignada la función correctamente
-              style={{ 
+              style={{
                 width: "170px",  // 🔹 Reduce el ancho del filtro
                 height: "23px",  // 🔹 Reduce la altura del filtro
                 padding: "5px 10px",  // 🔹 Ajusta el espacio interno para que se vea bien
-                borderRadius: "8px", 
-                border: "1px solid #ccc", 
-                backgroundColor: "#f9f9f9", 
-                fontSize: "14px",  
+                borderRadius: "8px",
+                border: "1px solid #ccc",
+                backgroundColor: "#f9f9f9",
+                fontSize: "14px",
                 textAlign: "center"
               }}
             />
@@ -432,9 +450,14 @@ const ReporteActivo = () => {
                     <TableData>{new Date(mantenimiento.fecha_fin).toLocaleDateString()}</TableData>
                     <TableData>{mantenimiento.estado}</TableData>
                     <TableData>
-                      <Button onClick={() => navigate(`/vermantenimiento/${mantenimiento.id}`)}>
-                        Ver Mantenimiento
-                      </Button>
+                      {mantenimiento?.mantenimiento_id ? (
+                        <Button onClick={() => handleOpenModal(mantenimiento.mantenimiento_id, id)}>
+                          Ver Mantenimiento
+                        </Button>
+                      ) : (
+                        <span style={{ color: 'red' }}>ID no disponible</span>
+                      )}
+
                     </TableData>
                   </TableRow>
                 ))
@@ -448,9 +471,18 @@ const ReporteActivo = () => {
                 </tr>
               )}
             </tbody>
+
           </Table>
         </TableWrapper>
       </Container>
+      <ModalReporteActivo
+        isOpen={modalOpen}
+        onClose={handleCloseModal}
+        mantenimientoId={selectedMantenimientoId}
+        activoId={selectedActivoId}  // 🔹 Pasamos el ID del activo al modal
+      />
+
+
       <Footer />
     </>
   );
