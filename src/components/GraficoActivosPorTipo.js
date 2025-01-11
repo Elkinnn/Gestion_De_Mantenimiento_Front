@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Doughnut } from "react-chartjs-2"; // Se mantiene el estilo de donut
+import React, { useState, useEffect, useRef } from "react";
+import { Doughnut } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import api from "../api/api";
 import styled from "styled-components";
@@ -30,6 +30,7 @@ const ChartContainer = styled.div`
   width: 65%;
   max-width: 700px;
   height: 400px;
+  position: relative;
 `;
 
 const LegendContainer = styled.div`
@@ -65,25 +66,37 @@ const TotalTipos = styled.p`
   margin-bottom: 10px;
 `;
 
+const CenterText = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  font-weight: bold;
+  font-size: 22px;
+  color: #333;
+`;
+
 const GraficoActivosPorTipo = () => {
     const [datos, setDatos] = useState([]);
-
-    const fetchData = () => {
-        api.get("/reportes/activos-por-tipo")
-            .then((res) => {
-                console.log("Datos actualizados:", res.data);
-                setDatos(res.data);
-            })
-            .catch((err) => console.error("Error obteniendo datos:", err));
-    };
+    const [hoveredData, setHoveredData] = useState(null);
+    const chartRef = useRef(null);
 
     useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const res = await api.get("/reportes/activos-por-tipo");
+                console.log("Datos actualizados:", res.data);
+                setDatos(res.data);
+            } catch (err) {
+                console.error("Error obteniendo datos:", err);
+            }
+        };
+
         fetchData();
         const interval = setInterval(fetchData, 5000);
         return () => clearInterval(interval);
     }, []);
-
-    const total = datos.reduce((acc, d) => acc + d.cantidad, 0);
 
     const colores = [
         "#FF0000", "#0000FF", "#008000", "#FFA500", "#800080", "#FFC0CB", "#00FFFF",
@@ -91,13 +104,32 @@ const GraficoActivosPorTipo = () => {
         "#FF4500", "#2E8B57"
     ];
 
+    const totalCantidad = datos.reduce((acc, d) => acc + d.cantidad, 0);
+
+    const handleHover = (event, elements) => {
+        if (elements.length > 0) {
+            const index = elements[0].index;
+            const tipo = datos[index]?.tipo_activo || "";
+            const porcentaje = ((datos[index]?.cantidad / totalCantidad) * 100).toFixed(2);
+
+            setHoveredData((prev) => {
+                if (prev?.tipo !== tipo || prev?.porcentaje !== porcentaje) {
+                    return { tipo, porcentaje };
+                }
+                return prev;
+            });
+        } else {
+            setHoveredData(null);
+        }
+    };
+
     return (
-        
         <ReportContainer>
             <Title>Distribución de activos por tipo en Mantenimientos</Title>
             <ChartWrapper>
                 <ChartContainer>
                     <Doughnut
+                        ref={chartRef}
                         data={{
                             labels: datos.map((d) => d.tipo_activo),
                             datasets: [
@@ -116,21 +148,22 @@ const GraficoActivosPorTipo = () => {
                                     display: false,
                                 },
                                 tooltip: {
-                                    callbacks: {
-                                        label: (tooltipItem) => {
-                                            let valor = tooltipItem.raw;
-                                            let porcentaje = ((valor / total) * 100).toFixed(2);
-                                            return ` ${porcentaje}%`;
-                                        },
-                                    },
+                                    enabled: false, // 🚀 Deshabilita la tooltip flotante
                                 },
                             },
+                            onHover: handleHover,
                         }}
                     />
+                    {hoveredData && (
+                        <CenterText>
+                            <div style={{ fontSize: "28px", color: "#007bff" }}>{hoveredData.porcentaje}%</div>
+                            <div style={{ fontSize: "18px", color: "#333" }}>{hoveredData.tipo}</div>
+                        </CenterText>
+                    )}
                 </ChartContainer>
 
                 <LegendContainer>
-                    <TotalTipos>Tipos totales: {total}</TotalTipos>
+                    <TotalTipos>Tipos totales: {totalCantidad}</TotalTipos>
                     <hr />
                     {datos.map((d, index) => (
                         <LegendItem key={index}>
