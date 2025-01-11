@@ -3,6 +3,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import GraficoActivosPorTipo from "./GraficoActivosPorTipo";
 import GraficoComponentes from "./GraficoComponentes";
+import GraficoActividades from "./GraficoActividades";
 import styled from "styled-components";
 import BackButton from './BackButton';
 
@@ -31,6 +32,7 @@ const ReporteGestion = () => {
                 <Title>Reportes de Gestión</Title>
                 <GraficoActivosPorTipo />
                 <GraficoComponentes />
+                <GraficoActividades /> 
             </Content>
             <Footer />
         </Container>
