@@ -2,6 +2,7 @@ import React from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import GraficoActivosPorTipo from "./GraficoActivosPorTipo";
+import GraficoComponentes from "./GraficoComponentes";
 import styled from "styled-components";
 
 const Container = styled.div`
@@ -27,6 +28,7 @@ const ReporteGestion = () => {
             <Content>
                 <Title>Reporte de Gestión</Title>
                 <GraficoActivosPorTipo />
+                <GraficoComponentes />
             </Content>
             <Footer />
         </Container>
