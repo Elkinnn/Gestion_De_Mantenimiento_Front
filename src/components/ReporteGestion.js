@@ -1,6 +1,7 @@
 import React from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import GraficoActivosPorTipo from "./GraficoActivosPorTipo";
 import styled from "styled-components";
 
 const Container = styled.div`
@@ -16,16 +17,16 @@ const Content = styled.div`
 `;
 
 const ReporteGestion = () => {
-  return (
-    <Container>
-      <Navbar title="Reporte de Gestión del Sistema" />
-      <Content>
-        <h1>Reporte de Gestión</h1>
-        <p>Esta es la página donde se mostrarán los reportes de gestión.</p>
-      </Content>
-      <Footer />
-    </Container>
-  );
+    return (
+        <Container>
+            <Navbar title="Reporte de Gestión del Sistema" />
+            <Content>
+                <h1>Reporte de Gestión</h1>
+                <GraficoActivosPorTipo />
+            </Content>
+            <Footer />
+        </Container>
+    );
 };
 
 export default ReporteGestion;
