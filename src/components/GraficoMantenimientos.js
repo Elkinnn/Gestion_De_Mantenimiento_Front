@@ -39,6 +39,18 @@ const Filters = styled.div`
   justify-content: center;
   gap: 10px;
   margin-bottom: 20px;
+  align-items: center;
+`;
+
+const InputWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 5px; /* Espaciado entre el label y el input */
+`;
+
+const Label = styled.label`
+  font-size: 14px;
+  font-weight: bold;
 `;
 
 const Input = styled.input`
@@ -126,18 +138,22 @@ const GraficoMantenimientos = () => {
         <ReportContainer>
             <Title>Número de mantenimientos realizados por período</Title>
             <Filters>
-                <Input
-                    type="date"
-                    value={fechaInicio}
-                    onChange={(e) => setFechaInicio(e.target.value)}
-                    placeholder="Fecha Inicio"
-                />
-                <Input
-                    type="date"
-                    value={fechaFin}
-                    onChange={(e) => setFechaFin(e.target.value)}
-                    placeholder="Fecha Fin"
-                />
+                <InputWrapper>
+                    <Label>Fecha inicio:</Label>
+                    <Input
+                        type="date"
+                        value={fechaInicio}
+                        onChange={(e) => setFechaInicio(e.target.value)}
+                    />
+                </InputWrapper>
+                <InputWrapper>
+                    <Label>Fecha fin:</Label>
+                    <Input
+                        type="date"
+                        value={fechaFin}
+                        onChange={(e) => setFechaFin(e.target.value)}
+                    />
+                </InputWrapper>
                 <Select
                     value={tipoMantenimiento}
                     onChange={(e) => setTipoMantenimiento(e.target.value)}
