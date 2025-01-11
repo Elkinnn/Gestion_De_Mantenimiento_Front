@@ -436,9 +436,9 @@ const ReporteActivo = () => {
           </FilterContainer>
         </FilterWrapper>
         <div style={{ textAlign: 'center', margin: '20px 0', fontSize: '20px', fontWeight: 'bold', color: '#000' }}>
-  Total de Mantenimientos: 
-  <span style={{ color: '#007bff', marginLeft: '8px', fontSize: '22px' }}>{totalMantenimientos}</span>
-</div>
+          Total de Mantenimientos:
+          <span style={{ color: '#007bff', marginLeft: '8px', fontSize: '22px' }}>{totalMantenimientos}</span>
+        </div>
 
 
         <TableWrapper>

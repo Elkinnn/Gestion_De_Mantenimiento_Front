@@ -20,13 +20,15 @@ const ModalContent = styled.div`
   border-radius: 10px;
   width: 50%;
   max-width: 700px;
-  max-height: 75vh;
+  height: auto; /* ✅ Cambia max-height a height: auto */
+  max-height: 85vh; /* 🔹 Permite que crezca un poco más si hay mucho contenido */
   overflow-y: auto;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
   font-family: 'Arial', sans-serif;
   position: relative;
   padding-bottom: 20px;
 `;
+
 
 const Header = styled.div`
   background-color: #007bff;
@@ -92,7 +94,7 @@ const SectionTitle = styled.h3`
 `;
 
 const ScrollableTableContainer = styled.div`
-  max-height: 150px;
+  max-height: 250px; /* 🔹 Antes estaba en 150px, ahora puede mostrar más */
   overflow-y: auto;
   border: 1px solid #ddd;
   border-radius: 5px;
@@ -129,8 +131,8 @@ const TableHeader = styled.th`
 `;
 
 const TableData = styled.td`
-  padding: 8px 10px;
-  font-size: 14px;
+  padding: 6px 8px; /* 🔹 Reduce el padding vertical */
+  font-size: 13px; /* 🔹 Antes 14px, ahora más compacto */
   border-bottom: 1px solid #ddd;
   vertical-align: middle;
   text-align: center;
