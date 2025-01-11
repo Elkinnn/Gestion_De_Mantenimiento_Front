@@ -159,6 +159,8 @@ const ReporteActivo = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedMantenimientoId, setSelectedMantenimientoId] = useState(null);
   const [selectedActivoId, setSelectedActivoId] = useState(null);
+  const [totalMantenimientos, setTotalMantenimientos] = useState(0); // ✅ Estado para almacenar el total
+
 
   const handleOpenModal = (mantenimientoId, activoId) => {
     console.log("📡 Abriendo modal con:", { mantenimientoId, activoId });
@@ -251,6 +253,7 @@ const ReporteActivo = () => {
       if (response.data) {
         setNombreActivo(response.data.nombre || 'Desconocido');
         setMantenimientos(response.data.mantenimientos || []);
+        setTotalMantenimientos(response.data.mantenimientos.length || 0); // ✅ Guardamos el total de mantenimientos
       }
     } catch (error) {
       console.error("❌ Error al cargar mantenimientos:", error);
@@ -265,6 +268,7 @@ const ReporteActivo = () => {
       }
 
       setMantenimientos([]);
+      setTotalMantenimientos(0);
     }
   };
 
@@ -431,6 +435,11 @@ const ReporteActivo = () => {
             <ClearButton onClick={handleClearFilters}>Limpiar</ClearButton>
           </FilterContainer>
         </FilterWrapper>
+        <div style={{ textAlign: 'center', margin: '20px 0', fontSize: '20px', fontWeight: 'bold', color: '#000' }}>
+  Total de Mantenimientos: 
+  <span style={{ color: '#007bff', marginLeft: '8px', fontSize: '22px' }}>{totalMantenimientos}</span>
+</div>
+
 
         <TableWrapper>
           <Table>
