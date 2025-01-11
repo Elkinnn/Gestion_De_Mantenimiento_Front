@@ -10,9 +10,10 @@ const ChartWrapper = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  max-width: 900px;
+  max-width: 1200px; /* Aumentado el tamaño total */
   margin: 0 auto;
   padding: 20px;
+  height: 500px; /* Se aumentó la altura */
 `;
 
 const Title = styled.h2`
@@ -40,7 +41,10 @@ const GraficoComponentes = () => {
     }, []);
 
     const colores = [
-        "#008000", "#00CED1", "#8A2BE2", "#FF0000", "#B22222", "#0000FF"
+        "#FF0000", "#0000FF", "#008000", "#FFA500", "#800080", "#FFC0CB", "#00FFFF", "#FFFF00", "#A52A2A",
+        "#808080", "#800000", "#4682B4", "#32CD32", "#8A2BE2", "#FF4500", "#2E8B57", "#20B2AA", "#DC143C",
+        "#FF6347", "#FFD700", "#00FF7F", "#40E0D0", "#6495ED", "#1E90FF", "#B8860B", "#9370DB", "#D2691E",
+        "#C71585", "#FF1493", "#ADFF2F"
     ];
 
     return (
@@ -57,7 +61,7 @@ const GraficoComponentes = () => {
                                 backgroundColor: colores.slice(0, datos.length),
                                 borderColor: "black",
                                 borderWidth: 1,
-                                barThickness: 40,
+                                barThickness: 50, // Aumenta el grosor de las barras
                             },
                         ],
                     }}
@@ -73,7 +77,21 @@ const GraficoComponentes = () => {
                             y: {
                                 beginAtZero: true,
                                 ticks: {
-                                    stepSize: 1,
+                                    stepSize: 1, // Mantiene el paso de 1
+                                    font: {
+                                        size: 14, // Agranda los números del eje Y
+                                    },
+                                },
+                                grid: {
+                                    drawBorder: false,
+                                    color: "rgba(0, 0, 0, 0.1)", // Hace que las líneas sean más visibles
+                                },
+                            },
+                            x: {
+                                ticks: {
+                                    font: {
+                                        size: 14, // Agranda los nombres de los componentes
+                                    },
                                 },
                             },
                         },
