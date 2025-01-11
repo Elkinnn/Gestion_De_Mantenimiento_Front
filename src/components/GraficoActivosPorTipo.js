@@ -73,8 +73,12 @@ const CenterText = styled.div`
   transform: translate(-50%, -50%);
   text-align: center;
   font-weight: bold;
-  font-size: 22px;
   color: #333;
+  max-width: 120px; /* 🚀 Evita que el texto sea demasiado ancho */
+  word-wrap: break-word;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 `;
 
 const GraficoActivosPorTipo = () => {
@@ -106,6 +110,10 @@ const GraficoActivosPorTipo = () => {
 
     const totalCantidad = datos.reduce((acc, d) => acc + d.cantidad, 0);
 
+    const truncateText = (text, length = 12) => {
+        return text.length > length ? text.substring(0, length) + "..." : text;
+    };
+
     const handleHover = (event, elements) => {
         if (elements.length > 0) {
             const index = elements[0].index;
@@ -114,7 +122,7 @@ const GraficoActivosPorTipo = () => {
 
             setHoveredData((prev) => {
                 if (prev?.tipo !== tipo || prev?.porcentaje !== porcentaje) {
-                    return { tipo, porcentaje };
+                    return { tipo: truncateText(tipo), porcentaje };
                 }
                 return prev;
             });
@@ -157,7 +165,7 @@ const GraficoActivosPorTipo = () => {
                     {hoveredData && (
                         <CenterText>
                             <div style={{ fontSize: "28px", color: "#007bff" }}>{hoveredData.porcentaje}%</div>
-                            <div style={{ fontSize: "18px", color: "#333" }}>{hoveredData.tipo}</div>
+                            <div style={{ fontSize: "16px", color: "#333" }}>{hoveredData.tipo}</div>
                         </CenterText>
                     )}
                 </ChartContainer>
