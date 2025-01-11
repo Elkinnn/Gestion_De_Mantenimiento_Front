@@ -12,8 +12,12 @@ const Container = styled.div`
 
 const Content = styled.div`
   flex: 1;
-  padding: 20px;
+  padding: 70px 50px; /* Se aumentó el padding para dar más espacio */
   text-align: center;
+`;
+
+const Title = styled.h1`
+  margin-bottom: 20px; /* Espaciado adicional para separar del gráfico */
 `;
 
 const ReporteGestion = () => {
@@ -21,7 +25,7 @@ const ReporteGestion = () => {
         <Container>
             <Navbar title="Reporte de Gestión del Sistema" />
             <Content>
-                <h1>Reporte de Gestión</h1>
+                <Title>Reporte de Gestión</Title>
                 <GraficoActivosPorTipo />
             </Content>
             <Footer />
