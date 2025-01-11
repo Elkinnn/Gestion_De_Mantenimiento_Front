@@ -3,6 +3,7 @@ import { Line } from "react-chartjs-2";
 import { Chart as ChartJS, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend } from "chart.js";
 import api from "../api/api";
 import styled from "styled-components";
+import { showErrorNotification } from "./Notification"; // Solo importamos la función de notificación
 
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend);
 
@@ -73,6 +74,17 @@ const GraficoMantenimientos = () => {
     const [tipoMantenimiento, setTipoMantenimiento] = useState("");
 
     const fetchData = () => {
+        // Si solo se ha ingresado la fecha de inicio, no hace nada
+        if (fechaInicio && !fechaFin) {
+            return;
+        }
+
+        // Verificar si la fecha fin es menor que la fecha inicio
+        if (fechaInicio && fechaFin && new Date(fechaFin) < new Date(fechaInicio)) {
+            showErrorNotification("La fecha fin no puede ser menor que la fecha inicio.");
+            return;
+        }
+
         api.get("/reportes/mantenimientos-por-periodo", {
             params: { fechaInicio, fechaFin, tipoMantenimiento }
         })
@@ -84,9 +96,9 @@ const GraficoMantenimientos = () => {
     };
 
     useEffect(() => {
-        fetchData(); // Llamado inicial
-        const interval = setInterval(fetchData, 5000); // Polling cada 5 segundos
-        return () => clearInterval(interval); // Limpia el intervalo al desmontar el componente
+        fetchData(); // Llamado inicial para que la gráfica siempre se muestre
+        const interval = setInterval(fetchData, 5000); // Polling cada 5s
+        return () => clearInterval(interval);
     }, [fechaInicio, fechaFin, tipoMantenimiento]);
 
     const limpiarFiltros = () => {
@@ -117,39 +129,42 @@ const GraficoMantenimientos = () => {
                     <option value="Interno">Interno</option>
                     <option value="Externo">Externo</option>
                 </Select>
-                <Button onClick={fetchData}>Filtrar</Button>
                 <Button onClick={limpiarFiltros}>Limpiar</Button>
             </Filters>
-            <ChartWrapper>
-                <Line
-                    data={{
-                        labels: datos.map((d) => d.fecha),
-                        datasets: [
-                            {
-                                label: "Mantenimientos",
-                                data: datos.map((d) => d.cantidad),
-                                borderColor: "red",
-                                backgroundColor: "rgba(255, 0, 0, 0.5)",
-                                pointRadius: 5,
-                                pointBackgroundColor: "red",
-                                tension: 0.4,
+
+            {/* La gráfica solo se muestra si NO hay fecha de inicio o si hay ambas fechas */}
+            {(datos.length > 0 && (!fechaInicio || (fechaInicio && fechaFin))) && (
+                <ChartWrapper>
+                    <Line
+                        data={{
+                            labels: datos.map((d) => d.fecha),
+                            datasets: [
+                                {
+                                    label: "Mantenimientos",
+                                    data: datos.map((d) => d.cantidad),
+                                    borderColor: "red",
+                                    backgroundColor: "rgba(255, 0, 0, 0.5)",
+                                    pointRadius: 5,
+                                    pointBackgroundColor: "red",
+                                    tension: 0.4,
+                                },
+                            ],
+                        }}
+                        options={{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
                             },
-                        ],
-                    }}
-                    options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                },
                             },
-                        },
-                    }}
-                />
-            </ChartWrapper>
+                        }}
+                    />
+                </ChartWrapper>
+            )}
         </ReportContainer>
     );
 };
