@@ -146,6 +146,7 @@ const ModalReporteActivo = ({ isOpen, onClose, mantenimientoId, activoId }) => {
 
     useEffect(() => {
         if (mantenimientoId && activoId) {
+            setActiveTab('actividades'); 
             fetchDetallesMantenimiento(mantenimientoId, activoId);
         }
     }, [mantenimientoId, activoId]);
