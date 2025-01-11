@@ -56,14 +56,17 @@ const Select = styled.select`
 `;
 
 const Button = styled.button`
-  background: black;
-  color: white;
   padding: 8px 15px;
+  background-color: #007bff;
+  color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
+  font-size: 14px;
   cursor: pointer;
+  flex: none;
+
   &:hover {
-    background: #444;
+    background-color: #0056b3;
   }
 `;
 
@@ -73,8 +76,9 @@ const GraficoMantenimientos = () => {
     const [fechaFin, setFechaFin] = useState("");
     const [tipoMantenimiento, setTipoMantenimiento] = useState("");
 
+    // Función para obtener datos de la API
     const fetchData = () => {
-        // Si solo se ha ingresado la fecha de inicio, no hace nada
+        // Si solo se ha ingresado la fecha de inicio, no actualiza la gráfica
         if (fechaInicio && !fechaFin) {
             return;
         }
@@ -82,6 +86,7 @@ const GraficoMantenimientos = () => {
         // Verificar si la fecha fin es menor que la fecha inicio
         if (fechaInicio && fechaFin && new Date(fechaFin) < new Date(fechaInicio)) {
             showErrorNotification("La fecha fin no puede ser menor que la fecha inicio.");
+            setFechaFin(""); // Borra la fecha fin si es incorrecta
             return;
         }
 
@@ -99,7 +104,7 @@ const GraficoMantenimientos = () => {
         fetchData(); // Llamado inicial para que la gráfica siempre se muestre
         const interval = setInterval(fetchData, 5000); // Polling cada 5s
         return () => clearInterval(interval);
-    }, [fechaInicio, fechaFin, tipoMantenimiento]);
+    }, [fechaFin, tipoMantenimiento]); // Solo se actualiza cuando se ingresa fecha fin o cambia el tipo de mantenimiento
 
     const limpiarFiltros = () => {
         setFechaInicio("");
