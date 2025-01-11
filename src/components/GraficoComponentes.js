@@ -33,6 +33,12 @@ const Title = styled.h2`
   color: black;
 `;
 
+const TotalComponentes = styled.p`
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 20px;
+`;
+
 const GraficoComponentes = () => {
     const [datos, setDatos] = useState([]);
 
@@ -51,6 +57,7 @@ const GraficoComponentes = () => {
         return () => clearInterval(interval);
     }, []);
 
+    const totalComponentes = datos.reduce((acc, d) => acc + Number(d.cantidad_usada), 0);
     const colores = [
         "#FF0000", "#0000FF", "#008000", "#FFA500", "#800080", "#FFC0CB", "#00FFFF", "#FFFF00", "#A52A2A",
         "#808080", "#800000", "#4682B4", "#32CD32", "#8A2BE2", "#FF4500", "#2E8B57", "#20B2AA", "#DC143C",
@@ -61,6 +68,7 @@ const GraficoComponentes = () => {
     return (
         <ReportContainer>
             <Title>Componentes utilizados en mantenimientos</Title>
+            <TotalComponentes>Componentes totales: {totalComponentes}</TotalComponentes>
             <ChartWrapper>
                 <Bar
                     data={{
