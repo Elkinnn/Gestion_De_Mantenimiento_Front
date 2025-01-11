@@ -80,7 +80,7 @@ const TableWrapper = styled.div`
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
   background-color: #fff;
   padding: 20px;
-  max-height: 400px;
+  max-height: 500px;
   overflow-y: auto;
   margin-bottom: 0;
 `;
@@ -111,11 +111,17 @@ const TableRow = styled.tr`
 `;
 
 const TableData = styled.td`
-  padding: 12px 20px;
+  padding: 2px 8px; /* 🔹 Reducimos aún más el padding vertical */
   border: 1px solid #ddd;
-  font-size: 14px;
+  font-size: 14px; /* 🔹 Dejamos el mismo tamaño de texto */
   color: #555;
+  height: 15px; /* 🔹 Reducimos aún más la altura de la celda */
+  text-align: center; /* 🔹 Centramos horizontalmente */
+  vertical-align: middle; /* 🔹 Centramos verticalmente */
 `;
+
+
+
 
 const Button = styled.button`
   padding: 12px 20px;
