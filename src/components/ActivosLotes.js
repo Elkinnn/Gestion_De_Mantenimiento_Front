@@ -189,7 +189,7 @@ const ActivosLotes = () => {
       } else if (errors.includes('invalid_format')) {
         showErrorNotification('Error al cargar: El formato es incorrecto.');
       } else if (errors.includes('exceeds_limit')) {
-        showErrorNotification('Error al cargar: El archivo contiene más de 50 activos.');
+        showErrorNotification('Error al cargar: El archivo contiene más de 100 activos.');
       } else {
         showErrorNotification(message || 'Hubo un error al cargar el archivo.');
       }
