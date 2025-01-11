@@ -4,6 +4,7 @@ import Footer from "./Footer";
 import GraficoActivosPorTipo from "./GraficoActivosPorTipo";
 import GraficoComponentes from "./GraficoComponentes";
 import styled from "styled-components";
+import BackButton from './BackButton';
 
 const Container = styled.div`
   display: flex;
@@ -24,9 +25,10 @@ const Title = styled.h1`
 const ReporteGestion = () => {
     return (
         <Container>
-            <Navbar title="Reporte de Gestión del Sistema" />
+            <Navbar title="Reportes de Gestión del Sistema" />
+            <BackButton />
             <Content>
-                <Title>Reporte de Gestión</Title>
+                <Title>Reportes de Gestión</Title>
                 <GraficoActivosPorTipo />
                 <GraficoComponentes />
             </Content>
