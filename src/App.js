@@ -13,7 +13,7 @@ import EditarActivos from './components/EditarActivos';
 import Notification from './components/Notification';
 import ActivosLotes from './components/ActivosLotes';
 import ReporteActivo from './components/ReporteActivo';
-
+import ReporteGestion from "./components/ReporteGestion";
 
 function App() {
   const token = localStorage.getItem('token'); // Obtener el token de localStorage si está presente
@@ -132,6 +132,15 @@ function App() {
           }
         />
 
+        <Route
+          path="/reporte"
+          element={
+            <ProtectedRoute
+              element={ReporteGestion}
+              allowedRoles={['Admin']} // Solo administradores pueden ver reportes
+            />
+          }
+        />
       </Routes>
     </Router>
   );
