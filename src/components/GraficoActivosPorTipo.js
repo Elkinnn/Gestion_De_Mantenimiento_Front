@@ -45,6 +45,7 @@ const LegendItem = styled.div`
   display: flex;
   align-items: center;
   margin-bottom: 8px;
+  cursor: pointer;
 `;
 
 const ColorBox = styled.div`
@@ -74,7 +75,7 @@ const CenterText = styled.div`
   text-align: center;
   font-weight: bold;
   color: #333;
-  max-width: 120px; /* 🚀 Evita que el texto sea demasiado ancho */
+  max-width: 120px;
   word-wrap: break-word;
   text-overflow: ellipsis;
   overflow: hidden;
@@ -103,9 +104,10 @@ const GraficoActivosPorTipo = () => {
     }, []);
 
     const colores = [
-        "#FF0000", "#0000FF", "#008000", "#FFA500", "#800080", "#FFC0CB", "#00FFFF",
-        "#FFFF00", "#A52A2A", "#808080", "#800000", "#4682B4", "#32CD32", "#8A2BE2",
-        "#FF4500", "#2E8B57"
+        "#FF0000", "#0000FF", "#008000", "#FFA500", "#800080", "#FFD700", "#00CED1", "#DC143C",
+        "#ADFF2F", "#FF69B4", "#8B4513", "#4682B4", "#32CD32", "#FF4500", "#6A5ACD", "#FFDAB9",
+        "#2E8B57", "#DAA520", "#FF6347", "#7FFF00", "#FF00FF", "#40E0D0", "#191970", "#B22222",
+        "#556B2F", "#FF8C00", "#9370DB", "#20B2AA", "#DC143C", "#8A2BE2"
     ];
 
     const totalCantidad = datos.reduce((acc, d) => acc + d.cantidad, 0);
@@ -120,15 +122,22 @@ const GraficoActivosPorTipo = () => {
             const tipo = datos[index]?.tipo_activo || "";
             const porcentaje = ((datos[index]?.cantidad / totalCantidad) * 100).toFixed(2);
 
-            setHoveredData((prev) => {
-                if (prev?.tipo !== tipo || prev?.porcentaje !== porcentaje) {
-                    return { tipo: truncateText(tipo), porcentaje };
-                }
-                return prev;
-            });
+            setHoveredData({ tipo: truncateText(tipo), porcentaje });
         } else {
             setHoveredData(null);
         }
+    };
+
+    const handleLegendHover = (index) => {
+        if (datos[index]) {
+            const tipo = datos[index].tipo_activo;
+            const porcentaje = ((datos[index].cantidad / totalCantidad) * 100).toFixed(2);
+            setHoveredData({ tipo: truncateText(tipo), porcentaje });
+        }
+    };
+
+    const handleLegendLeave = () => {
+        setHoveredData(null);
     };
 
     return (
@@ -156,7 +165,7 @@ const GraficoActivosPorTipo = () => {
                                     display: false,
                                 },
                                 tooltip: {
-                                    enabled: false, // 🚀 Deshabilita la tooltip flotante
+                                    enabled: false,
                                 },
                             },
                             onHover: handleHover,
@@ -174,7 +183,11 @@ const GraficoActivosPorTipo = () => {
                     <TotalTipos>Tipos totales: {totalCantidad}</TotalTipos>
                     <hr />
                     {datos.map((d, index) => (
-                        <LegendItem key={index}>
+                        <LegendItem
+                            key={index}
+                            onMouseEnter={() => handleLegendHover(index)}
+                            onMouseLeave={handleLegendLeave}
+                        >
                             <ColorBox color={colores[index]} />
                             {d.tipo_activo} - {d.cantidad}
                         </LegendItem>
