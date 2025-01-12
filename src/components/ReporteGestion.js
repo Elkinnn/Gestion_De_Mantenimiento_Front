@@ -45,17 +45,6 @@ const Button = styled.button`
   }
 `;
 
-const ReportContainer = styled.div`
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-  padding: 25px;
-  max-width: 1100px;
-  margin: 20px auto;
-  text-align: center;
-  border: 2px solid #ddd;
-`;
-
 const ReporteGestion = () => {
   const reportRef = useRef(null);
 
@@ -80,18 +69,10 @@ const ReporteGestion = () => {
       <BackButton />
       <Content ref={reportRef}>
         <Title>Reportes de Gestión</Title>
-        <ReportContainer>
           <GraficoActivosPorTipo />
-        </ReportContainer>
-        <ReportContainer>
           <GraficoComponentes />
-        </ReportContainer>
-        <ReportContainer>
           <GraficoActividades />
-        </ReportContainer>
-        <ReportContainer>
           <GraficoMantenimientos />
-        </ReportContainer>
       </Content>
       <Button onClick={handleDownloadPDF}>
         <FaDownload /> Descargar PDF
