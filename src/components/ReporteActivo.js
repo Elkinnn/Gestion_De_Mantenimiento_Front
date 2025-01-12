@@ -5,6 +5,7 @@ import Footer from './Footer';
 import { useNavigate, useParams } from 'react-router-dom';
 import { showInfoNotification } from './Notification';
 import ModalReporteActivo from './ModalReporteActivo';  // ✅ Importa el nuevo modal
+import BackButton from './BackButton';
 import api from '../api/api';
 
 const Container = styled.div`
@@ -373,6 +374,18 @@ const ReporteActivo = () => {
     <>
       <Navbar title={`Reporte del Activo ${nombreActivo || '...'}`} />
       <Container>
+        <BackButton
+          onClick={() => {
+            // Lógica del botón para regresar
+            console.log('Regresando a la página anterior...');
+            window.history.back(); // Regresa a la página anterior
+          }}
+          style={{
+            top: '20px', // Ajusta posición vertical
+            right: '15px', // Ajusta posición horizontal
+            fontSize: '24px', // Tamaño del icono
+          }}
+        />
         <Title>Mantenimientos del Activo {nombreActivo}</Title>
         <FilterWrapper>
           <FilterContainer>
