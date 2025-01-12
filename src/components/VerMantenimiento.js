@@ -745,13 +745,11 @@ const VerMantenimiento = () => {
 
           </TableWrapper>
           {!isTerminadoFromDB && (
-            <Button
-              type="button"
-              onClick={handleGuardarMantenimiento}
-              style={{ marginTop: '20px' }}
-            >
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+            <Button type="button" onClick={handleGuardarMantenimiento}>
               Guardar Mantenimiento
             </Button>
+          </div>
           )}
         </FormWrapper>
 

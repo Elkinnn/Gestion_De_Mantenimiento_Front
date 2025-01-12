@@ -266,7 +266,7 @@ const MenuActivos = () => {
                 showInfoNotification('Debes seleccionar un activo para generar el reporte.');
               } else {
                 console.log(`Activo seleccionado: ${selectedActivo}`);
-                navigate(`/verActivo${selectedActivo}`); // Redirige a la ruta de NuevoMantenimiento
+                navigate(`/reporteActivo/${selectedActivo}`); // Redirige a la ruta de NuevoMantenimiento
               }
             }}
           >
