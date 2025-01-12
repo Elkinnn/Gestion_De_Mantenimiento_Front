@@ -355,9 +355,16 @@ const ReporteActivo = () => {
     setProveedorSeleccionado('');
     setTecnicoSeleccionado('');
 
+    // 🔹 Restablecemos los inputs de fecha a "text" temporalmente para que el placeholder reaparezca
+    setTimeout(() => {
+      document.getElementById("fechaInicioInput").type = "text";
+      document.getElementById("fechaFinInput").type = "text";
+    }, 0);
+
     // 🔹 Volver a cargar los mantenimientos sin filtros
     fetchMantenimientos();
   };
+
 
 
 
@@ -373,38 +380,55 @@ const ReporteActivo = () => {
 
             {/* 🔹 FILTRO DE FECHA DE INICIO */}
             <input
-              type="date"
+              id="fechaInicioInput"
+              type={fechaInicio ? "date" : "text"} // 🔹 Mantiene "text" si está vacío
               value={fechaInicio ? new Date(fechaInicio).toISOString().split('T')[0] : ''}
-              onChange={handleFechaInicioChange} // Aquí debe estar asignada la función correctamente
+              onFocus={(e) => (e.target.type = "date")}
+              onBlur={(e) => {
+                if (!e.target.value) e.target.type = "text";
+              }}
+              onChange={handleFechaInicioChange}
+              placeholder="📅 Fecha Inicio"
               style={{
-                width: "170px",  // 🔹 Reduce el ancho del filtro
-                height: "23px",  // 🔹 Reduce la altura del filtro
-                padding: "5px 10px",  // 🔹 Ajusta el espacio interno para que se vea bien
+                width: "170px",
+                height: "23px",
+                padding: "5px 10px",
                 borderRadius: "8px",
                 border: "1px solid #ccc",
                 backgroundColor: "#f9f9f9",
                 fontSize: "14px",
-                textAlign: "center"
+                textAlign: "center",
+                cursor: "pointer",
+                color: fechaInicio ? "#000" : "#aaa",
               }}
-
             />
 
             {/* 🔹 FILTRO DE FECHA DE FIN */}
             <input
-              type="date"
+              id="fechaFinInput"
+              type={fechaFin ? "date" : "text"} // 🔹 Mantiene "text" si está vacío
               value={fechaFin ? new Date(fechaFin).toISOString().split('T')[0] : ''}
-              onChange={handleFechaFinChange} // Aquí debe estar asignada la función correctamente
+              onFocus={(e) => (e.target.type = "date")}
+              onBlur={(e) => {
+                if (!e.target.value) e.target.type = "text";
+              }}
+              onChange={handleFechaFinChange}
+              placeholder="📅 Fecha Fin"
               style={{
-                width: "170px",  // 🔹 Reduce el ancho del filtro
-                height: "23px",  // 🔹 Reduce la altura del filtro
-                padding: "5px 10px",  // 🔹 Ajusta el espacio interno para que se vea bien
+                width: "170px",
+                height: "23px",
+                padding: "5px 10px",
                 borderRadius: "8px",
                 border: "1px solid #ccc",
                 backgroundColor: "#f9f9f9",
                 fontSize: "14px",
-                textAlign: "center"
+                textAlign: "center",
+                cursor: "pointer",
+                color: fechaFin ? "#000" : "#aaa",
               }}
             />
+
+
 
 
             {/* 🔹 FILTRO DE PROVEEDOR */}
