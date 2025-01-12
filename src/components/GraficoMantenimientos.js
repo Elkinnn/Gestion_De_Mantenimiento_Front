@@ -87,10 +87,9 @@ const Button = styled.button`
 `;
 
 const TotalMantenimientos = styled.p`
-  font-size: 16px;
+  font-size: 20px;
   font-weight: bold;
-  margin-bottom: 10px;
-  color: #333;
+  margin-bottom: 20px;
 `;
 
 const GraficoMantenimientos = () => {
