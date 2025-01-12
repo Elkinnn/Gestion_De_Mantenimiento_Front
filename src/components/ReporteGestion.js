@@ -19,12 +19,19 @@ const Container = styled.div`
 
 const Content = styled.div`
   flex: 1;
-  padding: 70px 50px;
+  padding: 75px 50px;
   text-align: center;
 `;
 
 const Title = styled.h1`
   margin-bottom: 20px;
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: 1px; /* 📌 Se redujo el margen para acercarlo al último gráfico */
+  margin-bottom: 30px; /* 📌 Se asegura de que no esté pegado al footer */
 `;
 
 const Button = styled.button`
@@ -74,9 +81,11 @@ const ReporteGestion = () => {
           <GraficoActividades />
           <GraficoMantenimientos />
       </Content>
+      <ButtonContainer>
       <Button onClick={handleDownloadPDF}>
         <FaDownload /> Descargar PDF
       </Button>
+      </ButtonContainer>
       <Footer />
     </Container>
   );
