@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Doughnut } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import api from "../api/api";
@@ -87,21 +87,21 @@ const GraficoActivosPorTipo = () => {
     const [hoveredData, setHoveredData] = useState(null);
     const chartRef = useRef(null);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await api.get("/reportes/activos-por-tipo");
-                console.log("Datos actualizados:", res.data);
-                setDatos(res.data);
-            } catch (err) {
-                console.error("Error obteniendo datos:", err);
-            }
-        };
+    const fetchData = useCallback(async () => {
+        try {
+            const res = await api.get("/reportes/activos-por-tipo");
+            console.log("Datos actualizados:", res.data);
+            setDatos(res.data);
+        } catch (err) {
+            console.error("Error obteniendo datos:", err);
+        }
+    }, []);
 
+    useEffect(() => {
         fetchData();
         const interval = setInterval(fetchData, 5000);
         return () => clearInterval(interval);
-    }, []);
+    }, [fetchData]);
 
     const colores = [
         "#FF0000", "#0000FF", "#008000", "#FFA500", "#800080", "#FFD700", "#00CED1", "#DC143C",
@@ -116,25 +116,30 @@ const GraficoActivosPorTipo = () => {
         return text.length > length ? text.substring(0, length) + "..." : text;
     };
 
-    const handleHover = (event, elements) => {
+    const handleHover = useCallback((_, elements) => {
         if (elements.length > 0) {
             const index = elements[0].index;
             const tipo = datos[index]?.tipo_activo || "";
             const porcentaje = ((datos[index]?.cantidad / totalCantidad) * 100).toFixed(2);
 
-            setHoveredData({ tipo: truncateText(tipo), porcentaje });
+            setHoveredData((prev) => {
+                if (!prev || prev.tipo !== tipo || prev.porcentaje !== porcentaje) {
+                    return { tipo: truncateText(tipo), porcentaje };
+                }
+                return prev;
+            });
         } else {
             setHoveredData(null);
         }
-    };
+    }, [datos, totalCantidad]);
 
-    const handleLegendHover = (index) => {
+    const handleLegendHover = useCallback((index) => {
         if (datos[index]) {
             const tipo = datos[index].tipo_activo;
             const porcentaje = ((datos[index].cantidad / totalCantidad) * 100).toFixed(2);
             setHoveredData({ tipo: truncateText(tipo), porcentaje });
         }
-    };
+    }, [datos, totalCantidad]);
 
     const handleLegendLeave = () => {
         setHoveredData(null);
