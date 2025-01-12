@@ -38,14 +38,14 @@ const Filters = styled.div`
   display: flex;
   justify-content: center;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   align-items: center;
 `;
 
 const InputWrapper = styled.div`
   display: flex;
   align-items: center;
-  gap: 5px; /* Espaciado entre el label y el input */
+  gap: 5px;
 `;
 
 const Label = styled.label`
@@ -58,6 +58,8 @@ const Input = styled.input`
   border-radius: 5px;
   border: 1px solid #ccc;
   font-size: 14px;
+  background: ${(props) => (props.disabled ? "#f0f0f0" : "white")};
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
 `;
 
 const Select = styled.select`
@@ -65,7 +67,7 @@ const Select = styled.select`
   border-radius: 5px;
   border: 1px solid #ccc;
   font-size: 14px;
-  background: ${(props) => (props.disabled ? "#f0f0f0" : "white")}; /* Cambio de color cuando está bloqueado */
+  background: ${(props) => (props.disabled ? "#f0f0f0" : "white")};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
 `;
 
@@ -84,55 +86,60 @@ const Button = styled.button`
   }
 `;
 
+const TotalMantenimientos = styled.p`
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #333;
+`;
+
 const GraficoMantenimientos = () => {
     const [datos, setDatos] = useState([]);
     const [fechaInicio, setFechaInicio] = useState("");
     const [fechaFin, setFechaFin] = useState("");
     const [tipoMantenimiento, setTipoMantenimiento] = useState("");
-    const [mostrarTodos, setMostrarTodos] = useState(true); // Estado para mantener la gráfica inicial
+    const [mostrarTodos, setMostrarTodos] = useState(true);
 
-    // Determinar si el select de Tipo de Mantenimiento debe estar bloqueado
     const selectDeshabilitado = fechaInicio && !fechaFin;
-
-    // Función para obtener datos de la API
-    const fetchData = () => {
-        // Si solo se ha ingresado la fecha de inicio, no actualiza la gráfica (se mantiene igual)
-        if (fechaInicio && !fechaFin) {
-            return;
-        }
-
-        // Verificar si la fecha fin es menor que la fecha inicio
-        if (fechaInicio && fechaFin && new Date(fechaFin) < new Date(fechaInicio)) {
-            showErrorNotification("La fecha fin no puede ser menor que la fecha inicio.");
-            setFechaFin(""); // Borra la fecha fin si es incorrecta
-            return;
-        }
-
-        setMostrarTodos(!fechaInicio && !fechaFin); // Si no hay filtros, se muestra todo
-
-        api.get("/reportes/mantenimientos-por-periodo", {
-            params: { fechaInicio, fechaFin, tipoMantenimiento }
-        })
-            .then((res) => {
-                console.log("Datos actualizados:", res.data);
-                setDatos(res.data);
-            })
-            .catch((err) => console.error("Error obteniendo datos:", err));
-    };
+    const inputFechaFinDeshabilitado = !fechaInicio;
 
     useEffect(() => {
-        fetchData(); // Llamado inicial para que la gráfica siempre se muestre
-        const interval = setInterval(fetchData, 5000); // Polling cada 5s
+        const fetchData = () => {
+            if (fechaInicio && !fechaFin) {
+                return;
+            }
+
+            if (fechaInicio && fechaFin && new Date(fechaFin) < new Date(fechaInicio)) {
+                showErrorNotification("La fecha fin no puede ser menor que la fecha inicio.");
+                setFechaFin("");
+                return;
+            }
+
+            setMostrarTodos(!fechaInicio && !fechaFin);
+
+            api.get("/reportes/mantenimientos-por-periodo", {
+                params: { fechaInicio, fechaFin, tipoMantenimiento }
+            })
+                .then((res) => {
+                    console.log("Datos actualizados:", res.data);
+                    setDatos(res.data);
+                })
+                .catch((err) => console.error("Error obteniendo datos:", err));
+        };
+
+        fetchData();
+        const interval = setInterval(fetchData, 5000);
         return () => clearInterval(interval);
-    }, [fechaFin, tipoMantenimiento]); // Solo se actualiza cuando se ingresa fecha fin o cambia el tipo de mantenimiento
+    }, [fechaFin, tipoMantenimiento, fechaInicio]); // Se agregaron todas las dependencias necesarias
 
     const limpiarFiltros = () => {
         setFechaInicio("");
         setFechaFin("");
         setTipoMantenimiento("");
         setMostrarTodos(true);
-        fetchData();
     };
+
+    const totalMantenimientos = datos.reduce((acc, d) => acc + d.cantidad, 0);
 
     return (
         <ReportContainer>
@@ -152,12 +159,13 @@ const GraficoMantenimientos = () => {
                         type="date"
                         value={fechaFin}
                         onChange={(e) => setFechaFin(e.target.value)}
+                        disabled={inputFechaFinDeshabilitado}
                     />
                 </InputWrapper>
                 <Select
                     value={tipoMantenimiento}
                     onChange={(e) => setTipoMantenimiento(e.target.value)}
-                    disabled={selectDeshabilitado} // Se bloquea si solo hay fecha inicio
+                    disabled={selectDeshabilitado}
                 >
                     <option value="">Tipo de Mantenimiento</option>
                     <option value="Interno">Interno</option>
@@ -166,7 +174,8 @@ const GraficoMantenimientos = () => {
                 <Button onClick={limpiarFiltros}>Limpiar</Button>
             </Filters>
 
-            {/* La gráfica solo se actualiza cuando se ingresan AMBAS fechas, pero siempre se muestra sin filtros */}
+            <TotalMantenimientos>Mantenimientos totales: {totalMantenimientos}</TotalMantenimientos>
+
             {(mostrarTodos || (fechaInicio && fechaFin)) && datos.length > 0 && (
                 <ChartWrapper>
                     <Line
