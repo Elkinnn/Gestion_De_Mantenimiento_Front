@@ -61,15 +61,15 @@ const ReporteGestion = () => {
 
   const handleDownloadPDF = async () => {
     const input = reportRef.current;
-    const canvas = await html2canvas(input, { scale: 3 }); // 🚀 Mejora la calidad del PDF
+    const canvas = await html2canvas(input, { scale: 3 }); 
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF({
       orientation: "portrait",
       unit: "mm",
-      format: "a3", // 📏 Se ajusta mejor la proporción
+      format: "a3", 
     });
 
-    pdf.addImage(imgData, "PNG", 10, 10, 280, 400); // 📌 Ajuste para evitar distorsión
+    pdf.addImage(imgData, "PNG", 10, 10, 280, 400); 
 
     pdf.save("ReporteGestion.pdf");
   };
