@@ -161,6 +161,7 @@ const ReporteActivo = () => {
   const [selectedMantenimientoId, setSelectedMantenimientoId] = useState(null);
   const [selectedActivoId, setSelectedActivoId] = useState(null);
   const [totalMantenimientos, setTotalMantenimientos] = useState(0); // ✅ Estado para almacenar el total
+  const [filtrosDeshabilitados, setFiltrosDeshabilitados] = useState(false);
 
 
   const handleOpenModal = (mantenimientoId, activoId) => {
@@ -254,7 +255,14 @@ const ReporteActivo = () => {
       if (response.data) {
         setNombreActivo(response.data.nombre || 'Desconocido');
         setMantenimientos(response.data.mantenimientos || []);
-        setTotalMantenimientos(response.data.mantenimientos.length || 0); // ✅ Guardamos el total de mantenimientos
+        setTotalMantenimientos(response.data.mantenimientos.length || 0);
+
+        if (response.data.mantenimientos.length === 0) {
+          setFiltrosDeshabilitados(true);  // 🔹 Deshabilita los filtros si no hay mantenimientos
+        } else {
+          setFiltrosDeshabilitados(false); // 🔹 Habilita los filtros si hay mantenimientos
+        }
+        // ✅ Guardamos el total de mantenimientos
       }
     } catch (error) {
       console.error("❌ Error al cargar mantenimientos:", error);
@@ -402,6 +410,7 @@ const ReporteActivo = () => {
               }}
               onChange={handleFechaInicioChange}
               placeholder="📅 Fecha Inicio"
+              disabled={filtrosDeshabilitados} // 🔹 Deshabilitar si no hay mantenimientos
               style={{
                 width: "170px",
                 height: "23px",
@@ -416,7 +425,6 @@ const ReporteActivo = () => {
               }}
             />
 
-            {/* 🔹 FILTRO DE FECHA DE FIN */}
             <input
               id="fechaFinInput"
               type={fechaFin ? "date" : "text"} // 🔹 Mantiene "text" si está vacío
@@ -427,6 +435,7 @@ const ReporteActivo = () => {
               }}
               onChange={handleFechaFinChange}
               placeholder="📅 Fecha Fin"
+              disabled={filtrosDeshabilitados} // 🔹 Deshabilitar si no hay mantenimientos
               style={{
                 width: "170px",
                 height: "23px",
@@ -441,14 +450,10 @@ const ReporteActivo = () => {
               }}
             />
 
-
-
-
-            {/* 🔹 FILTRO DE PROVEEDOR */}
             <FilterSelect
               value={proveedorSeleccionado}
               onChange={(e) => setProveedorSeleccionado(e.target.value)}
-              disabled={tecnicoSeleccionado !== ''}
+              disabled={tecnicoSeleccionado !== '' || filtrosDeshabilitados} // 🔹 Deshabilitar si no hay mantenimientos
             >
               <option value="">Proveedor</option>
               {proveedores.map(proveedor => (
@@ -456,11 +461,10 @@ const ReporteActivo = () => {
               ))}
             </FilterSelect>
 
-            {/* 🔹 FILTRO DE TÉCNICO */}
             <FilterSelect
               value={tecnicoSeleccionado}
               onChange={(e) => setTecnicoSeleccionado(e.target.value)}
-              disabled={proveedorSeleccionado !== ''}
+              disabled={proveedorSeleccionado !== '' || filtrosDeshabilitados} // 🔹 Deshabilitar si no hay mantenimientos
             >
               <option value="">Técnico</option>
               {tecnicos.map(tecnico => (
@@ -468,8 +472,10 @@ const ReporteActivo = () => {
               ))}
             </FilterSelect>
 
-            {/* 🔹 BOTÓN LIMPIAR - Ahora borra todo y recarga los datos */}
-            <ClearButton onClick={handleClearFilters}>Limpiar</ClearButton>
+            <ClearButton onClick={handleClearFilters} disabled={filtrosDeshabilitados}>
+              Limpiar
+            </ClearButton>
+
           </FilterContainer>
         </FilterWrapper>
         <div style={{ textAlign: 'center', margin: '20px 0', fontSize: '20px', fontWeight: 'bold', color: '#000' }}>
