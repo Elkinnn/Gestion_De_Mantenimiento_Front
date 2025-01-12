@@ -126,7 +126,7 @@ const TableData = styled.td`
 
 const Button = styled.button`
   padding: 12px 20px;
-  background-color: #007bff;
+  background-color: #28a745;
   color: white;
   border: none;
   border-radius: 4px;
@@ -140,9 +140,9 @@ const Button = styled.button`
   text-align: center;
   margin-left: auto;
   margin-right: auto;
-
+  margin-top: 10px;
   &:hover {
-    background-color: #0056b3;
+    background-color: #218838;
   }
 `;
 
