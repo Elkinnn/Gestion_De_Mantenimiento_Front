@@ -139,6 +139,7 @@ const Modal = ({ isOpen, onClose, onAgregarActivo, activos }) => {
                 <TableHeader>Código</TableHeader>
                 <TableHeader>Serie</TableHeader>
                 <TableHeader>Tipo</TableHeader>
+                <TableHeader>Estado</TableHeader> {/* 🔹 Nueva columna Estado */}
               </tr>
             </thead>
             <tbody>
@@ -150,24 +151,24 @@ const Modal = ({ isOpen, onClose, onAgregarActivo, activos }) => {
                     onClick={() => handleRowClick(activo)}
                     style={{
                       backgroundColor:
-                        activoSeleccionado?.codigo === activo.codigo
-                          ? '#cce5ff'
-                          : undefined,
+                        activoSeleccionado?.codigo === activo.codigo ? '#cce5ff' : undefined,
                     }}
                   >
                     <TableData>{activo.codigo}</TableData>
                     <TableData>{activo.nombre}</TableData>
                     <TableData>{activo.tipo}</TableData>
+                    <TableData>{activo.estado || 'Desconocido'}</TableData> {/* 🔹 Nueva celda de estado */}
                   </TableRow>
                 ))
               ) : (
                 <tr>
-                  <TableData colSpan="3">No hay activos disponibles.</TableData>
+                  <TableData colSpan="4">No hay activos disponibles.</TableData> {/* 🔹 Ajustado a 4 columnas */}
                 </tr>
               )}
             </tbody>
           </Table>
         </TableWrapper>
+
         <AddButtonWrapper>
           <Button
             onClick={() => {
