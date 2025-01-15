@@ -84,7 +84,7 @@ const GraficoComponentes = () => {
                                 backgroundColor: colores.slice(0, datos.length),
                                 borderColor: "black",
                                 borderWidth: 1,
-                                barThickness: 50, // Aumenta el grosor de las barras
+                                barThickness: 42, // Aumenta el grosor de las barras
                             },
                         ],
                     }}
@@ -113,9 +113,14 @@ const GraficoComponentes = () => {
                             x: {
                                 ticks: {
                                     font: {
-                                        size: 14, // Agranda los nombres de los componentes
+                                        size: 12,
                                     },
+                                    autoSkip: false,
+                                    maxRotation: 40, 
+                                    minRotation: 40,
                                 },
+                                categoryPercentage: 0.8, // Espacio entre categorías
+                                barPercentage: 0.6, // Espacio entre barras
                             },
                         },
                     }}
