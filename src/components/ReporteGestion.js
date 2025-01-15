@@ -30,8 +30,8 @@ const Title = styled.h1`
 const ButtonContainer = styled.div`
   display: flex;
   justify-content: center;
-  margin-top: 1px; /* 📌 Se redujo el margen para acercarlo al último gráfico */
-  margin-bottom: 30px; /* 📌 Se asegura de que no esté pegado al footer */
+  margin-top: 1px; 
+  margin-bottom: 30px; 
 `;
 
 const Button = styled.button`
@@ -56,16 +56,49 @@ const ReporteGestion = () => {
   const reportRef = useRef(null);
 
   const handleDownloadPDF = async () => {
-    const input = reportRef.current;
-    const canvas = await html2canvas(input, { scale: 3 }); 
-    const imgData = canvas.toDataURL("image/png");
+    
     const pdf = new jsPDF({
       orientation: "portrait",
       unit: "mm",
-      format: "a3", 
+      format: "a4",
     });
 
-    pdf.addImage(imgData, "PNG", 10, 10, 280, 400); 
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const imgWidth = pageWidth - 20; 
+    const marginTop = 10; 
+    const spacingBetweenGraphsFirstPage = 5;
+    const spacingBetweenGraphsSecondPage = 15; 
+
+    const graphs = [
+      document.getElementById("grafico-activos"),
+      document.getElementById("grafico-componentes"),
+      document.getElementById("grafico-actividades"),
+      document.getElementById("grafico-mantenimientos"),
+    ];
+
+    let isFirstPage = true; 
+
+    for (let i = 0; i < graphs.length; i += 2) {
+      if (!isFirstPage) pdf.addPage(); 
+      isFirstPage = false;
+
+      if (graphs[i]) {
+        const canvas1 = await html2canvas(graphs[i], { scale: 3 });
+        const imgData1 = canvas1.toDataURL("image/png");
+        const ratio1 = canvas1.width / canvas1.height;
+        const imgHeight1 = imgWidth / ratio1; 
+        pdf.addImage(imgData1, "PNG", 10, marginTop, imgWidth, imgHeight1);
+      }
+
+      if (graphs[i + 1]) {
+        const canvas2 = await html2canvas(graphs[i + 1], { scale: 3 });
+        const imgData2 = canvas2.toDataURL("image/png");
+        const ratio2 = canvas2.width / canvas2.height;
+        const imgHeight2 = imgWidth / ratio2; 
+        const spacingBetweenGraphs = i === 2 ? spacingBetweenGraphsSecondPage : spacingBetweenGraphsFirstPage; // 🔹 Ajuste de espacio por página
+        pdf.addImage(imgData2, "PNG", 10, marginTop + imgHeight2 + spacingBetweenGraphs, imgWidth, imgHeight2);
+      }
+    }
 
     pdf.save("ReporteGestion.pdf");
   };
@@ -76,15 +109,23 @@ const ReporteGestion = () => {
       <BackButton />
       <Content ref={reportRef}>
         <Title>Reportes de Gestión</Title>
+        <div id="grafico-activos">
           <GraficoActivosPorTipo />
+        </div>
+        <div id="grafico-componentes">
           <GraficoComponentes />
+        </div>
+        <div id="grafico-actividades">
           <GraficoActividades />
+        </div>
+        <div id="grafico-mantenimientos">
           <GraficoMantenimientos />
+        </div>
       </Content>
       <ButtonContainer>
-      <Button onClick={handleDownloadPDF}>
-        <FaDownload /> Descargar PDF
-      </Button>
+        <Button onClick={handleDownloadPDF}>
+          <FaDownload /> Descargar PDF
+        </Button>
       </ButtonContainer>
       <Footer />
     </Container>
